@@ -60,8 +60,7 @@ public final class ActionGate {
             return true;
         }
         StaminaSession session = sessions.session(player);
-        if (!session.pool.canStart()) {
-            deny(player, session, action, DenialRecord.INSUFFICIENT_STAMINA);
+        if (refuseIfCannotStart(player, session, action)) {
             return false;
         }
         StaminaProfile profile = profiles.profile(player);
@@ -74,6 +73,25 @@ public final class ActionGate {
             LOGGER.info("JASS spent player={} action={} cost={} internal={}",
                     player.getName(), action, format(finalCost), format(session.pool.stamina()));
         }
+        return true;
+    }
+
+    /**
+     * Records a denial for an attempt the client already blocked, but only if the server agrees
+     * the player cannot start an action now. Never charges anything.
+     */
+    public void reportRefusedAttempt(EntityPlayer player, ResourceLocation action) {
+        if (!isExempt(player)) {
+            refuseIfCannotStart(player, sessions.session(player), action);
+        }
+    }
+
+    /** The start rule: records a denial and returns true when the player cannot start an action. */
+    private boolean refuseIfCannotStart(EntityPlayer player, StaminaSession session, ResourceLocation action) {
+        if (session.pool.canStart()) {
+            return false;
+        }
+        deny(player, session, action, DenialRecord.INSUFFICIENT_STAMINA);
         return true;
     }
 

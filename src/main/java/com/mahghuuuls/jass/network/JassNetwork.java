@@ -17,6 +17,8 @@ public final class JassNetwork {
     /** Receives client input facts, which it must validate, on the server. Installed by the gameplay layer. */
     public interface ServerInputSink {
         void onAirSwing(EntityPlayerMP player);
+
+        void onRefusedAttack(EntityPlayerMP player);
     }
 
     private static SimpleNetworkWrapper channel;
@@ -30,6 +32,7 @@ public final class JassNetwork {
         channel = NetworkRegistry.INSTANCE.newSimpleChannel(Tags.MOD_ID);
         channel.registerMessage(StaminaSnapshotMessage.Handler.class, StaminaSnapshotMessage.class, 0, Side.CLIENT);
         channel.registerMessage(AirSwingMessage.Handler.class, AirSwingMessage.class, 1, Side.SERVER);
+        channel.registerMessage(RefusedAttackMessage.Handler.class, RefusedAttackMessage.class, 2, Side.SERVER);
     }
 
     public static SimpleNetworkWrapper channel() {

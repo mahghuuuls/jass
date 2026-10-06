@@ -63,6 +63,11 @@ public final class MeleeHook implements JassNetwork.ServerInputSink {
         gate.tryDiscrete(player, JassActions.MELEE, meleeCost(player.getHeldItemMainhand()));
     }
 
+    @Override
+    public void onRefusedAttack(EntityPlayerMP player) {
+        gate.reportRefusedAttempt(player, JassActions.MELEE);
+    }
+
     private static double meleeCost(ItemStack stack) {
         return ConfigModel.server().meleeCost(ItemKeys.registryName(stack), ItemKeys.metadata(stack));
     }
