@@ -1,0 +1,63 @@
+key,default,unit,allowed,side,source,notes
+max_stamina,60,stamina,>0,server,draft 10.1,Base Maximum Stamina before modifiers
+stamina_regeneration,25,stamina per second,>=0,server,draft 10.2,Base Stamina Regeneration before modifiers
+regeneration_delay,0.75,seconds,>=0,server,draft 10.3,Base Regeneration Delay before modifiers
+max_debt_fraction,1.0,fraction of Maximum Stamina,>=0 or -1 for uncapped,server,draft 10.4,Stamina never goes below -(fraction x Maximum Stamina)
+efficiency_scale,100,stat points,>0,server,draft 10.5,Cost factor = scale / (scale + Stamina Efficiency)
+min_discrete_cost,1,stamina,>0,server,draft 10.6,Applies only when the configured base cost is above 0
+sprint_cost,5,stamina per second,>=0,server,draft 10.7,Continuous; times weight multiplier and efficiency factor
+default_melee_cost,12,stamina,>=0,server,draft 10.8,Discrete; for any held item (or empty hand) without an override
+melee_cost_overrides,,list,namespace:item[@meta or @*]=cost lines,server,draft 10.32,No overrides by default
+default_bow_draw_cost,8,stamina per second,>=0,server,draft 10.9,Continuous; for any bow-draw item without an override
+jump_cost,12,stamina,>=0,server,draft 10.10,Discrete; times weight multiplier and efficiency factor
+jump_cost_enabled,false,boolean,true/false,server,draft 10.11,
+elenai_dodge_base_cost,10,stamina,>=0,server,draft 10.12,Discrete; times weight multiplier and efficiency factor
+weight_factor,0.02,per weight point,>=0,server,draft 10.13,Movement multiplier = 1 + Effective Weight x weight_factor
+armor_weight.minecraft:leather_helmet,1,weight,>=0,server,draft 10.14,
+armor_weight.minecraft:leather_chestplate,2,weight,>=0,server,draft 10.14,
+armor_weight.minecraft:leather_leggings,2,weight,>=0,server,draft 10.14,
+armor_weight.minecraft:leather_boots,1,weight,>=0,server,draft 10.14,
+armor_weight.minecraft:golden_helmet,2,weight,>=0,server,draft 10.15,
+armor_weight.minecraft:golden_chestplate,4,weight,>=0,server,draft 10.15,
+armor_weight.minecraft:golden_leggings,3,weight,>=0,server,draft 10.15,
+armor_weight.minecraft:golden_boots,2,weight,>=0,server,draft 10.15,
+armor_weight.minecraft:chainmail_helmet,2,weight,>=0,server,draft 10.16,
+armor_weight.minecraft:chainmail_chestplate,4,weight,>=0,server,draft 10.16,
+armor_weight.minecraft:chainmail_leggings,3,weight,>=0,server,draft 10.16,
+armor_weight.minecraft:chainmail_boots,2,weight,>=0,server,draft 10.16,
+armor_weight.minecraft:iron_helmet,3,weight,>=0,server,draft 10.17,
+armor_weight.minecraft:iron_chestplate,6,weight,>=0,server,draft 10.17,
+armor_weight.minecraft:iron_leggings,5,weight,>=0,server,draft 10.17,
+armor_weight.minecraft:iron_boots,3,weight,>=0,server,draft 10.17,
+armor_weight.minecraft:diamond_helmet,4,weight,>=0,server,draft 10.18,
+armor_weight.minecraft:diamond_chestplate,8,weight,>=0,server,draft 10.18,
+armor_weight.minecraft:diamond_leggings,7,weight,>=0,server,draft 10.18,
+armor_weight.minecraft:diamond_boots,4,weight,>=0,server,draft 10.18,
+fallback_weight_per_armor_point,1.0,weight per armor point,>=0,server,decision D3,Worn armor without an explicit weight: weight = its armor points x this value
+block_stamina_per_damage,1.0,stamina per damage point,>=0,server,draft 10.19,
+stability_scale,100,stat points,>0,server,draft 10.20,Stability factor = scale / (scale + Stability)
+shield_stability.minecraft:shield,50,stat points,>=0,server,draft 10.21,
+shield_melee_block.minecraft:shield,1.0,fraction,0 to 1,server,draft 10.22,Fraction of a blocked melee hit that the shield stops
+shield_projectile_block.minecraft:shield,1.0,fraction,0 to 1,server,draft 10.23,Fraction of a blocked projectile hit that the shield stops
+default_shield_stability,0,stat points,>=0,server,decision D4,Blocking item without an explicit Stability
+default_shield_melee_block,1.0,fraction,0 to 1,server,decision D4,Blocking item without an explicit melee fraction (vanilla behavior)
+default_shield_projectile_block,1.0,fraction,0 to 1,server,decision D4,Blocking item without an explicit projectile fraction (vanilla behavior)
+guard_break_cooldown,2.0,seconds,>=0,server,draft 10.24,
+inhibited_integration,true,boolean,true/false,server,draft 10.25,Takes effect only when Inhibited is installed
+elenai_dodge_resource_integration,true,boolean,true/false,server,draft 10.26,Takes effect only when Elenai Dodge 2 is installed
+elenai_weight_source_integration,true,boolean,true/false,server,draft 10.27,Takes effect only when Elenai Dodge 2 is installed
+elenai_weight_conversion,1.4,JASS weight per Elenai weight unit,>=0,server,decision D9,Full diamond is 16 Elenai units; 16 x 1.4 = 22.4 vs 23 standalone
+rlcombat_integration,true,boolean,true/false,server,owner note 2026-10-05,Takes effect only when RLCombat is installed
+creative_consumption,false,boolean,true/false,server,draft 10.28,
+hud_hide_when_full,true,boolean,true/false,client,draft 10.29,
+hud_hide_outside_inhibited,true,boolean,true/false,client,draft 10.30,Applies only while Inhibited gating is active
+hud_numeric_text,hidden,mode,hidden/current/maximum/current_and_maximum,client,draft 10.31 and decision D2,
+denied_action_sound,true,boolean,true/false,client,decision D6,At most once per second
+command_permission_level,2,permission level,0 to 4,server,decision D7,
+debug_logging,false,boolean,true/false,server,decision D7,Logs JASS denials and Guard Breaks; rate-limited
+hud_style,bar,mode,bar/segments,client,REV-001,Built-in display style when Classic Bar does not show the bar
+segments_x_offset,0,pixels,any integer,client,REV-001,Positive moves right
+segments_y_offset,0,pixels,any integer,client,REV-001,Positive moves up
+classicbar_integration,true,boolean,true/false,client,REV-001,Takes effect only when Classic Bar Legacy is installed
+classicbar_bar_color,#E3B834,#RRGGBB,hex color,client,REV-001,Invalid values fall back to the default with a warning
+classicbar_show_numbers,true,boolean,true/false,client,REV-001,
