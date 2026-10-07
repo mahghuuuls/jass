@@ -22,8 +22,8 @@ public final class JassClientConfig {
     public static boolean hudHideWhenFull = true;
 
     @Config.Name("denied_action_sound")
-    @Config.Comment("Play a quiet sound, at most once per second, when an action is refused for lack of Stamina.")
-    public static boolean deniedActionSound = true;
+    @Config.Comment("Play a soft sound, at most once per second, when an action is refused for lack of Stamina.")
+    public static boolean deniedActionSound = false;
 
     @Config.Name("hud_numeric_text")
     @Config.Comment("Numbers shown next to the Stamina display.")
