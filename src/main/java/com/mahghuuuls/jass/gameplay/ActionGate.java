@@ -23,6 +23,7 @@ public final class ActionGate {
     private static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
     private static final int DEBUG_LINES_PER_SECOND = 4;
     private static final int TICKS_PER_SECOND = 20;
+    private static final double SECONDS_PER_TICK = 1.0 / TICKS_PER_SECOND;
 
     private final StaminaSessionManager sessions;
     private final ProfileService profiles;
@@ -56,6 +57,11 @@ public final class ActionGate {
      * @return {@code true} if the action may happen; {@code false} if it was denied for Stamina
      */
     public boolean tryDiscrete(EntityPlayer player, ResourceLocation action, double baseCost) {
+        return tryDiscrete(player, action, baseCost, CostKind.STANDARD);
+    }
+
+    /** As {@link #tryDiscrete(EntityPlayer, ResourceLocation, double)}, with the weight multiplier for a Movement Action. */
+    public boolean tryDiscrete(EntityPlayer player, ResourceLocation action, double baseCost, CostKind kind) {
         if (isExempt(player)) {
             return true;
         }
@@ -65,13 +71,42 @@ public final class ActionGate {
         }
         StaminaProfile profile = profiles.profile(player);
         ServerSettings settings = ConfigModel.server();
-        double factors = CostCalculator.efficiencyFactor(settings.efficiencyScale(), profile.efficiency());
+        double factors = factors(kind, profile, settings);
         double finalCost = CostCalculator.finalDiscreteCost(baseCost, factors, settings.minDiscreteCost());
         double floor = StaminaPool.debtFloor(profile.maximum(), settings.maxDebtFraction());
         session.pool.payDiscrete(finalCost, floor, profile.regenerationDelay());
         if (settings.debugLogging() && allowDebugLine(session, player.world.getTotalWorldTime())) {
             LOGGER.info("JASS spent player={} action={} cost={} internal={}",
                     player.getName(), action, format(finalCost), format(session.pool.stamina()));
+        }
+        return true;
+    }
+
+    /**
+     * Drains one server tick of a Continuous Action. Allowed only while Stamina is above zero;
+     * drains at most down to zero (never into debt) and pauses regeneration for the tick. The tick
+     * that reaches zero still returns {@code true}; the next one returns {@code false}, so running
+     * out counts as one denial and the action stops at most one tick late.
+     *
+     * @return {@code true} if the action may continue; {@code false} if Stamina is gone and the
+     *         caller must stop it (a denial is recorded)
+     */
+    public boolean drainContinuous(EntityPlayer player, ResourceLocation action, double costPerSecond, CostKind kind) {
+        if (isExempt(player)) {
+            return true;
+        }
+        StaminaSession session = sessions.session(player);
+        if (refuseIfCannotStart(player, session, action)) {
+            return false;
+        }
+        StaminaProfile profile = profiles.profile(player);
+        ServerSettings settings = ConfigModel.server();
+        double factors = factors(kind, profile, settings);
+        double drained = session.pool.drainContinuous(
+                CostCalculator.continuousCost(costPerSecond, factors, SECONDS_PER_TICK), profile.regenerationDelay());
+        if (settings.debugLogging() && allowDrainLine(session, player.world.getTotalWorldTime())) {
+            LOGGER.info("JASS drained player={} action={} amount={} internal={}",
+                    player.getName(), action, format(drained), format(session.pool.stamina()));
         }
         return true;
     }
@@ -145,8 +180,29 @@ public final class ActionGate {
         }
     }
 
+    /** All cost factors for the player: efficiency always, the weight multiplier for Movement Actions. */
+    private static double factors(CostKind kind, StaminaProfile profile, ServerSettings settings) {
+        double factors = CostCalculator.efficiencyFactor(settings.efficiencyScale(), profile.efficiency());
+        if (kind == CostKind.MOVEMENT) {
+            factors *= CostCalculator.weightMultiplier(profile.effectiveWeight(), settings.weightFactor());
+        }
+        return factors;
+    }
+
     private static String format(double value) {
         return String.format(Locale.ROOT, "%.2f", value);
+    }
+
+    /**
+     * Drain lines have their own budget, one per second per player, so a held Continuous Action
+     * never uses up the shared budget that spend and denial lines need.
+     */
+    private static boolean allowDrainLine(StaminaSession session, long tick) {
+        if (tick - session.lastDrainLineTick < TICKS_PER_SECOND) {
+            return false;
+        }
+        session.lastDrainLineTick = tick;
+        return true;
     }
 
     private static boolean allowDebugLine(StaminaSession session, long tick) {

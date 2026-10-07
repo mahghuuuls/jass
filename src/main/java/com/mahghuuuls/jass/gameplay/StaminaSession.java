@@ -16,6 +16,7 @@ final class StaminaSession {
     int denialCount;
     long debugWindowStartTick = -20L;
     int debugLinesInWindow;
+    long lastDrainLineTick = -20L;
 
     boolean syncForced = true;
     long lastSyncTick = -SyncService.MIN_TICKS_BETWEEN_SENDS;
@@ -23,6 +24,7 @@ final class StaminaSession {
     float lastSentMaximum = Float.NaN;
     boolean lastSentCanSpend;
     int lastSentDenialCount;
+    boolean lastSentJumpCostEnabled;
 
     StaminaSession(double initialStamina) {
         this.pool = new StaminaPool(initialStamina);

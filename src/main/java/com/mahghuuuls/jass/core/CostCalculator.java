@@ -25,6 +25,11 @@ public final class CostCalculator {
         return stabilityScale / (stabilityScale + Math.max(0.0, stability));
     }
 
+    /** Amount a Continuous Action drains in {@code seconds}: cost per second times all factors. */
+    public static double continuousCost(double costPerSecond, double factors, double seconds) {
+        return Math.max(0.0, costPerSecond) * factors * seconds;
+    }
+
     /**
      * Final cost of a Discrete Action. A configured base cost of zero (or less) stays free;
      * any other cost is at least {@code minimumCost} after all factors.

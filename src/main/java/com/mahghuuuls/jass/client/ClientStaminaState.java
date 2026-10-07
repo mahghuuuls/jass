@@ -17,6 +17,7 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
     private static float maximum;
     private static boolean canSpend = true;
     private static int denialCount;
+    private static boolean jumpCostEnabled;
 
     private final FeedbackPlayer feedback;
 
@@ -40,6 +41,11 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
         return canSpend;
     }
 
+    /** True when the server charges ground jumps. */
+    public static boolean jumpCostEnabled() {
+        return jumpCostEnabled;
+    }
+
     @Override
     public void onSnapshot(StaminaSnapshotMessage message) {
         Minecraft.getMinecraft().addScheduledTask(() -> {
@@ -49,6 +55,7 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
             maximum = message.maximum();
             canSpend = message.canSpend();
             denialCount = message.denialCount();
+            jumpCostEnabled = message.jumpCostEnabled();
             if (newDenial) {
                 feedback.onDenied();
             }
@@ -63,6 +70,7 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
             maximum = 0.0F;
             canSpend = true;
             denialCount = 0;
+            jumpCostEnabled = false;
         });
     }
 }

@@ -4,7 +4,10 @@ import com.mahghuuuls.jass.command.StaminaCommand;
 import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.gameplay.AttackHandSource;
 import com.mahghuuuls.jass.gameplay.JassGameplay;
+import com.mahghuuuls.jass.gameplay.hooks.BowHook;
+import com.mahghuuuls.jass.gameplay.hooks.JumpHook;
 import com.mahghuuuls.jass.gameplay.hooks.MeleeHook;
+import com.mahghuuuls.jass.gameplay.hooks.SprintHook;
 import com.mahghuuuls.jass.network.JassNetwork;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -40,6 +43,11 @@ public class JustAnotherStaminaSystemMod {
         MeleeHook melee = new MeleeHook(gameplay.gate(), AttackHandSource.MAIN_HAND);
         MinecraftForge.EVENT_BUS.register(melee);
         JassNetwork.setServerSink(melee);
+        MinecraftForge.EVENT_BUS.register(new SprintHook(gameplay.gate()));
+        MinecraftForge.EVENT_BUS.register(new BowHook(gameplay.gate()));
+        JumpHook jump = new JumpHook(gameplay.gate());
+        MinecraftForge.EVENT_BUS.register(jump);
+        JassNetwork.setJumpSink(jump);
         proxy.preInit();
         LOGGER.info("{} {} loaded", Tags.MOD_NAME, Tags.VERSION);
     }

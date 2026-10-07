@@ -12,15 +12,18 @@ public final class StaminaSnapshotMessage implements IMessage {
     private float maximum;
     private boolean canSpend;
     private int denialCount;
+    private boolean jumpCostEnabled;
 
     public StaminaSnapshotMessage() {
     }
 
-    public StaminaSnapshotMessage(float visible, float maximum, boolean canSpend, int denialCount) {
+    public StaminaSnapshotMessage(float visible, float maximum, boolean canSpend, int denialCount,
+            boolean jumpCostEnabled) {
         this.visible = visible;
         this.maximum = maximum;
         this.canSpend = canSpend;
         this.denialCount = denialCount;
+        this.jumpCostEnabled = jumpCostEnabled;
     }
 
     public float visible() {
@@ -40,12 +43,18 @@ public final class StaminaSnapshotMessage implements IMessage {
         return denialCount;
     }
 
+    /** True when the server charges ground jumps, so the client reports jumps and refuses them at zero. */
+    public boolean jumpCostEnabled() {
+        return jumpCostEnabled;
+    }
+
     @Override
     public void fromBytes(ByteBuf buf) {
         visible = buf.readFloat();
         maximum = buf.readFloat();
         canSpend = buf.readBoolean();
         denialCount = buf.readInt();
+        jumpCostEnabled = buf.readBoolean();
     }
 
     @Override
@@ -54,6 +63,7 @@ public final class StaminaSnapshotMessage implements IMessage {
         buf.writeFloat(maximum);
         buf.writeBoolean(canSpend);
         buf.writeInt(denialCount);
+        buf.writeBoolean(jumpCostEnabled);
     }
 
     public static final class Handler implements IMessageHandler<StaminaSnapshotMessage, IMessage> {

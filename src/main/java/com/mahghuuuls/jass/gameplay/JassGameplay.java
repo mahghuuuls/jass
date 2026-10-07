@@ -1,7 +1,9 @@
 package com.mahghuuuls.jass.gameplay;
 
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -15,12 +17,13 @@ public final class JassGameplay {
     private static final double SECONDS_PER_TICK = 1.0 / 20.0;
     private static JassGameplay instance;
 
+    private final ProfileService profiles;
     private final StaminaSessionManager sessions;
     private final ActionGate gate;
     private final SyncService sync;
 
     private JassGameplay() {
-        ProfileService profiles = new ProfileService();
+        this.profiles = new ProfileService();
         this.sessions = new StaminaSessionManager(profiles);
         this.gate = new ActionGate(sessions, profiles);
         this.sync = new SyncService(sessions, gate);
@@ -59,6 +62,13 @@ public final class JassGameplay {
             sessions.onDimensionChanged(event.player);
         } else {
             sessions.onRespawn(event.player);
+        }
+    }
+
+    @SubscribeEvent
+    public void onEquipmentChange(LivingEquipmentChangeEvent event) {
+        if (event.getEntityLiving() instanceof EntityPlayer && !event.getEntityLiving().world.isRemote) {
+            profiles.invalidate((EntityPlayer) event.getEntityLiving());
         }
     }
 

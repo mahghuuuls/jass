@@ -11,7 +11,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -39,7 +39,7 @@ class BalanceDefaultsParityTest {
                 Config.Name name = field.getAnnotation(Config.Name.class);
                 assertNotNull(name, configClass.getSimpleName() + "." + field.getName()
                         + " has no @Config.Name, so its key cannot be checked against the balance table");
-                String expected = table.get(name.value());
+                String expected = table.containsKey(name.value()) ? table.get(name.value()) : perItemRows(table, name.value());
                 assertNotNull(expected, "balance-defaults.csv has no row for " + name.value());
                 assertDefault(name.value(), expected, field.get(null));
                 checked++;
@@ -52,6 +52,23 @@ class BalanceDefaultsParityTest {
     void invalidValueFallbacksUseTheBalanceTableDefault() throws Exception {
         Map<String, String> table = readTable();
         assertEquals(Double.parseDouble(table.get("max_debt_fraction")), ConfigValues.DEFAULT_MAX_DEBT_FRACTION, 1e-9);
+    }
+
+    /**
+     * A per-item list whose defaults are table rows named {@code key.namespace:item}, joined as
+     * {@code namespace:item=value} lines in table order; {@code null} when there are none.
+     */
+    private static String perItemRows(Map<String, String> table, String key) {
+        StringBuilder lines = new StringBuilder();
+        for (Map.Entry<String, String> row : table.entrySet()) {
+            if (row.getKey().startsWith(key + ".")) {
+                if (lines.length() > 0) {
+                    lines.append(';');
+                }
+                lines.append(row.getKey().substring(key.length() + 1)).append('=').append(row.getValue());
+            }
+        }
+        return lines.length() == 0 ? null : lines.toString();
     }
 
     private static void assertDefault(String key, String expected, Object actual) {
@@ -72,7 +89,7 @@ class BalanceDefaultsParityTest {
     }
 
     private static Map<String, String> readTable() throws IOException {
-        Map<String, String> table = new HashMap<>();
+        Map<String, String> table = new LinkedHashMap<>();
         InputStream in = BalanceDefaultsParityTest.class.getResourceAsStream("/balance-defaults.csv");
         assertNotNull(in, "balance-defaults.csv missing from test resources");
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {

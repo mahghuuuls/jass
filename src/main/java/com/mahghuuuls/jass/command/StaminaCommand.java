@@ -104,6 +104,8 @@ public final class StaminaCommand extends CommandBase {
                 + " delay=" + format(profile.regenerationDelay())
                 + " delayRemaining=" + format(readout.delayRemaining())
                 + " efficiency=" + format(profile.efficiency())
+                + " weight=" + format(profile.effectiveWeight())
+                + " weightSource=" + profile.weightSource()
                 + " spending=" + (readout.exempt() ? "exempt" : "active")
                 + " lastDenial=" + denial(readout.lastDenial(), player.world.getTotalWorldTime());
     }

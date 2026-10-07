@@ -21,9 +21,15 @@ public final class JassNetwork {
         void onRefusedAttack(EntityPlayerMP player);
     }
 
+    /** Receives client jump reports, which it must validate, on the server. Installed by the gameplay layer. */
+    public interface ServerJumpSink {
+        void onJump(EntityPlayerMP player);
+    }
+
     private static SimpleNetworkWrapper channel;
     private static volatile ClientSnapshotSink clientSink;
     private static volatile ServerInputSink serverSink;
+    private static volatile ServerJumpSink jumpSink;
 
     private JassNetwork() {
     }
@@ -33,6 +39,7 @@ public final class JassNetwork {
         channel.registerMessage(StaminaSnapshotMessage.Handler.class, StaminaSnapshotMessage.class, 0, Side.CLIENT);
         channel.registerMessage(AirSwingMessage.Handler.class, AirSwingMessage.class, 1, Side.SERVER);
         channel.registerMessage(RefusedAttackMessage.Handler.class, RefusedAttackMessage.class, 2, Side.SERVER);
+        channel.registerMessage(JumpMessage.Handler.class, JumpMessage.class, 3, Side.SERVER);
     }
 
     public static SimpleNetworkWrapper channel() {
@@ -53,5 +60,13 @@ public final class JassNetwork {
 
     static ServerInputSink serverSink() {
         return serverSink;
+    }
+
+    public static void setJumpSink(ServerJumpSink sink) {
+        jumpSink = sink;
+    }
+
+    static ServerJumpSink jumpSink() {
+        return jumpSink;
     }
 }

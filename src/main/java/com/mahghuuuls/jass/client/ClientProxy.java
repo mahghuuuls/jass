@@ -14,6 +14,6 @@ public final class ClientProxy extends CommonProxy {
         JassNetwork.setClientSink(state);
         MinecraftForge.EVENT_BUS.register(state);
         MinecraftForge.EVENT_BUS.register(new HudPresenter(feedback));
-        MinecraftForge.EVENT_BUS.register(new ClientActionGuard());
+        MinecraftForge.EVENT_BUS.register(ClientActionGuard.install(feedback));
     }
 }

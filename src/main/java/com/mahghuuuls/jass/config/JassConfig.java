@@ -49,6 +49,58 @@ public final class JassConfig {
     @Config.Comment("If true, Creative-mode players spend Stamina like Survival players.")
     public static boolean creativeConsumption = false;
 
+    @Config.Name("sprint_cost")
+    @Config.Comment("Stamina drained per second while sprinting on land. Swimming costs nothing.")
+    @Config.RangeDouble(min = 0.0, max = 100000.0)
+    public static double sprintCost = 5.0;
+
+    @Config.Name("jump_cost_enabled")
+    @Config.Comment("If true, each jump from the ground costs jump_cost (times weight and efficiency) and cannot start at zero Stamina.")
+    public static boolean jumpCostEnabled = false;
+
+    @Config.Name("jump_cost")
+    @Config.Comment("Stamina cost of one jump from the ground when jump_cost_enabled is true. Swimming, climbing, and flying are not jumps.")
+    @Config.RangeDouble(min = 0.0, max = 100000.0)
+    public static double jumpCost = 12.0;
+
+    @Config.Name("weight_factor")
+    @Config.Comment("Movement actions (sprint, jump, Elenai dodge) cost 1 + Effective Weight x this value times more.")
+    @Config.RangeDouble(min = 0.0, max = 100.0)
+    public static double weightFactor = 0.02;
+
+    @Config.Name("armor_weight")
+    @Config.Comment({
+            "Weight of worn armor items, one entry per line: namespace:item[@metadata or @*]=weight",
+            "Worn armor without an entry weighs its armor points x fallback_weight_per_armor_point.",
+            "Held items, shields, and Baubles never add weight. Metadata is ignored for items with durability."})
+    public static String[] armorWeight = {
+            "minecraft:leather_helmet=1",
+            "minecraft:leather_chestplate=2",
+            "minecraft:leather_leggings=2",
+            "minecraft:leather_boots=1",
+            "minecraft:golden_helmet=2",
+            "minecraft:golden_chestplate=4",
+            "minecraft:golden_leggings=3",
+            "minecraft:golden_boots=2",
+            "minecraft:chainmail_helmet=2",
+            "minecraft:chainmail_chestplate=4",
+            "minecraft:chainmail_leggings=3",
+            "minecraft:chainmail_boots=2",
+            "minecraft:iron_helmet=3",
+            "minecraft:iron_chestplate=6",
+            "minecraft:iron_leggings=5",
+            "minecraft:iron_boots=3",
+            "minecraft:diamond_helmet=4",
+            "minecraft:diamond_chestplate=8",
+            "minecraft:diamond_leggings=7",
+            "minecraft:diamond_boots=4"
+    };
+
+    @Config.Name("fallback_weight_per_armor_point")
+    @Config.Comment("Weight per armor point for worn armor that has no armor_weight entry.")
+    @Config.RangeDouble(min = 0.0, max = 1000.0)
+    public static double fallbackWeightPerArmorPoint = 1.0;
+
     @Config.Name("default_melee_cost")
     @Config.Comment("Stamina cost of one melee swing (hit or miss) with any item, or an empty hand, that has no entry in melee_cost_overrides.")
     @Config.RangeDouble(min = 0.0, max = 100000.0)
@@ -60,6 +112,18 @@ public final class JassConfig {
             "Example: minecraft:iron_sword=20   A cost of 0 makes swings with that item free.",
             "Metadata is ignored for items with durability. minecraft:air sets the empty-hand cost."})
     public static String[] meleeCostOverrides = {};
+
+    @Config.Name("default_bow_draw_cost")
+    @Config.Comment("Stamina drained per second while drawing or holding a bow-draw item (bows and anything drawn like a bow) that has no entry in bow_draw_cost_overrides.")
+    @Config.RangeDouble(min = 0.0, max = 100000.0)
+    public static double defaultBowDrawCost = 8.0;
+
+    @Config.Name("bow_draw_cost_overrides")
+    @Config.Comment({
+            "Draw cost per second per item, one entry per line: namespace:item[@metadata or @*]=rate",
+            "Example: minecraft:bow=4   A rate of 0 means drawing that item never drains Stamina and is never",
+            "interrupted (it still cannot start at zero Stamina). Metadata is ignored for items with durability."})
+    public static String[] bowDrawCostOverrides = {};
 
     @Config.Name("debug_logging")
     @Config.Comment("Write one server log line for each action denied for Stamina (rate-limited). For testing; off for normal play.")

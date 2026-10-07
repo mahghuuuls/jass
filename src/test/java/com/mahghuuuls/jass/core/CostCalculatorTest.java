@@ -46,6 +46,16 @@ class CostCalculatorTest {
     }
 
     @Test
+    void oneTickOfSprintAtDefaultsDrainsAQuarter() {
+        assertEquals(0.25, CostCalculator.continuousCost(5.0, 1.0, 1.0 / 20.0), EPS);
+    }
+
+    @Test
+    void continuousCostAppliesFactors() {
+        assertEquals(0.125, CostCalculator.continuousCost(5.0, 0.5, 1.0 / 20.0), EPS);
+    }
+
+    @Test
     void negativeStabilityCountsAsZero() {
         assertEquals(1.0, CostCalculator.stabilityFactor(100.0, -10.0), EPS);
     }
