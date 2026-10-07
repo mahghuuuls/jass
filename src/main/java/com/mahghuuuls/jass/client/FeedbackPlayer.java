@@ -11,8 +11,8 @@ final class FeedbackPlayer {
 
     private static final long FLASH_MILLIS = 500L;
     private static final long SOUND_INTERVAL_MILLIS = 1000L;
-    private static final float SOUND_VOLUME = 0.4F;
-    private static final float SOUND_PITCH = 0.7F;
+    private static final float SOUND_VOLUME = 0.35F;
+    private static final float SOUND_PITCH = 0.5F;
 
     private long flashUntil;
     private long lastSound = Long.MIN_VALUE / 2;
@@ -23,7 +23,8 @@ final class FeedbackPlayer {
         Minecraft mc = Minecraft.getMinecraft();
         if (JassClientConfig.deniedActionSound && mc.player != null && now - lastSound >= SOUND_INTERVAL_MILLIS) {
             lastSound = now;
-            mc.player.playSound(SoundEvents.ENTITY_PLAYER_ATTACK_NODAMAGE, SOUND_VOLUME, SOUND_PITCH);
+            // A low, soft thump that does not sound like an attack.
+            mc.player.playSound(SoundEvents.BLOCK_NOTE_BASEDRUM, SOUND_VOLUME, SOUND_PITCH);
         }
     }
 
