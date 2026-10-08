@@ -1,5 +1,6 @@
 package com.mahghuuuls.jass.gameplay;
 
+import com.mahghuuuls.jass.api.JassApi;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.common.MinecraftForge;
@@ -18,6 +19,7 @@ public final class JassGameplay {
     private static JassGameplay instance;
 
     private final ProfileService profiles;
+    private final JassApi.Control api;
     private final StaminaSessionManager sessions;
     private final ActionGate gate;
     private final SyncService sync;
@@ -27,6 +29,7 @@ public final class JassGameplay {
         this.sessions = new StaminaSessionManager(profiles);
         this.gate = new ActionGate(sessions, profiles);
         this.sync = new SyncService(sessions, gate);
+        this.api = JassApi.bind(new StaminaService(gate), profiles::invalidate);
     }
 
     /** Creates the gameplay layer and registers its lifecycle and tick listeners. */
@@ -42,6 +45,16 @@ public final class JassGameplay {
 
     public ActionGate gate() {
         return gate;
+    }
+
+    /** Closes addon provider registration; called when loading completes. */
+    public void freezeApiRegistration() {
+        api.freezeRegistration();
+    }
+
+    /** Wires an integration's extra active slots (Baubles). */
+    public void useExtraSlots(ExtraSlotSource source) {
+        profiles.addExtraSlots(source);
     }
 
     /** Drops every session, for server shutdown. */
@@ -61,6 +74,7 @@ public final class JassGameplay {
         if (event.isEndConquered()) {
             sessions.onDimensionChanged(event.player);
         } else {
+            profiles.invalidate(event.player);
             sessions.onRespawn(event.player);
         }
     }
@@ -89,6 +103,7 @@ public final class JassGameplay {
             return;
         }
         EntityPlayerMP player = (EntityPlayerMP) event.player;
+        profiles.pollExtraSlots(player, player.world.getTotalWorldTime());
         gate.tick(player, SECONDS_PER_TICK);
         sync.maybeSend(player, player.world.getTotalWorldTime());
     }

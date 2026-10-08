@@ -28,6 +28,7 @@ final class StaminaSession {
     int lastSentDenialCount;
     boolean lastSentJumpCostEnabled;
     boolean lastSentGuardBroken;
+    boolean lastSentGated;
 
     StaminaSession(double initialStamina) {
         this.pool = new StaminaPool(initialStamina);

@@ -1,5 +1,10 @@
 package com.mahghuuuls.jass.config;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+
 /** Immutable copy of the server gameplay settings taken when configuration loads or changes. */
 public final class ServerSettings {
 
@@ -31,6 +36,9 @@ public final class ServerSettings {
     private final double defaultShieldMeleeBlock;
     private final double defaultShieldProjectileBlock;
     private final double guardBreakCooldown;
+    private final ItemModifierRules itemModifiers;
+    private final boolean inhibitedIntegration;
+    private final Set<String> disabledProviders;
     private final boolean debugLogging;
 
     ServerSettings(int revision) {
@@ -63,6 +71,15 @@ public final class ServerSettings {
         this.defaultShieldMeleeBlock = JassConfig.defaultShieldMeleeBlock;
         this.defaultShieldProjectileBlock = JassConfig.defaultShieldProjectileBlock;
         this.guardBreakCooldown = JassConfig.guardBreakCooldown;
+        this.itemModifiers = ItemModifierRules.parse("item_stamina_modifiers", JassConfig.itemStaminaModifiers);
+        this.inhibitedIntegration = JassConfig.inhibitedIntegration;
+        Set<String> disabled = new HashSet<>();
+        for (String id : JassConfig.disabledStaminaProviders) {
+            if (id != null && !id.trim().isEmpty()) {
+                disabled.add(id.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        this.disabledProviders = Collections.unmodifiableSet(disabled);
         this.debugLogging = JassConfig.debugLogging;
     }
 
@@ -170,13 +187,27 @@ public final class ServerSettings {
         return guardBreakCooldown;
     }
 
+    /** Configured Item Stamina Modifier rules. */
+    public ItemModifierRules itemModifiers() {
+        return itemModifiers;
+    }
+
+    public boolean inhibitedIntegration() {
+        return inhibitedIntegration;
+    }
+
+    /** True when the server configuration disables this addon provider id (REQ-082). */
+    public boolean providerDisabled(String providerId) {
+        return disabledProviders.contains(providerId.toLowerCase(Locale.ROOT));
+    }
+
     public boolean debugLogging() {
         return debugLogging;
     }
 
     /** Every parsed per-item list, for warnings and unknown-item checks. */
-    public ItemValueRules[] itemLists() {
-        return new ItemValueRules[]{meleeCosts, bowDrawCosts, armorWeights, shieldStability, shieldMeleeBlock,
+    public ItemList[] itemLists() {
+        return new ItemList[]{itemModifiers, meleeCosts, bowDrawCosts, armorWeights, shieldStability, shieldMeleeBlock,
                 shieldProjectileBlock};
     }
 }

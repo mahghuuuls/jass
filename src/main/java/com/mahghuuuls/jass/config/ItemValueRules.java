@@ -12,7 +12,7 @@ import java.util.Map;
  * An entry with a metadata value wins over the same item's wildcard entry. Invalid lines are
  * skipped and reported; they never become a different value.
  */
-public final class ItemValueRules {
+public final class ItemValueRules implements ItemList {
 
     /** Metadata value that matches only an item's wildcard entry. */
     public static final int ANY_METADATA = -1;
@@ -87,36 +87,36 @@ public final class ItemValueRules {
         return any != null ? any : fallback;
     }
 
-    /** Registry names mentioned by the list, for unknown-item checks once items are registered. */
+    @Override
     public List<String> registryNames() {
-        List<String> names = new ArrayList<>();
-        for (String key : values.keySet()) {
-            String name = key.substring(0, key.lastIndexOf('@'));
-            if (!names.contains(name)) {
-                names.add(name);
-            }
-        }
-        return names;
+        return namesOf(values.keySet(), false);
     }
 
-    /** Registry names that have an entry for one specific metadata value. */
+    @Override
     public List<String> namesWithMetadataEntries() {
-        List<String> names = new ArrayList<>();
-        for (String key : values.keySet()) {
-            int at = key.lastIndexOf('@');
-            String name = key.substring(0, at);
-            if (!key.endsWith("@" + ANY_METADATA) && !names.contains(name)) {
-                names.add(name);
-            }
-        }
-        return names;
+        return namesOf(values.keySet(), true);
     }
 
+    @Override
     public List<String> warnings() {
         return warnings;
     }
 
-    private static String itemKey(String itemPart) {
+    /** Distinct registry names of {@code name@meta} keys, optionally only those with a specific metadata. */
+    static List<String> namesOf(Iterable<String> keys, boolean specificMetadataOnly) {
+        List<String> names = new ArrayList<>();
+        for (String key : keys) {
+            String name = key.substring(0, key.lastIndexOf('@'));
+            boolean specific = !key.endsWith("@" + ANY_METADATA);
+            if ((!specificMetadataOnly || specific) && !names.contains(name)) {
+                names.add(name);
+            }
+        }
+        return names;
+    }
+
+    /** {@code name@meta} key of an item part, or {@code null} when it is malformed. */
+    static String itemKey(String itemPart) {
         String name = itemPart;
         int meta = ANY_METADATA;
         int at = itemPart.indexOf('@');

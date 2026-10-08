@@ -53,7 +53,13 @@ public final class StaminaCommand extends CommandBase {
         switch (sub) {
             case "inspect": {
                 EntityPlayerMP target = target(server, sender, args, 1);
-                reply(sender, describe(target, gate.read(target)));
+                StaminaReadout readout = gate.read(target);
+                reply(sender, describe(target, readout));
+                if (readout != null) {
+                    for (String contribution : readout.profile().contributions()) {
+                        reply(sender, "JASS contribution player=" + target.getName() + " " + contribution);
+                    }
+                }
                 break;
             }
             case "restore": {
@@ -106,7 +112,7 @@ public final class StaminaCommand extends CommandBase {
                 + " efficiency=" + format(profile.efficiency())
                 + " weight=" + format(profile.effectiveWeight())
                 + " weightSource=" + profile.weightSource()
-                + " spending=" + (readout.exempt() ? "exempt" : "active")
+                + " spending=" + (readout.exempt() ? "exempt" : readout.gated() ? "gated" : "active")
                 + " guardBreak=" + format(readout.guardBreakTicks() / 20.0)
                 + " lastDenial=" + denial(readout.lastDenial(), player.world.getTotalWorldTime());
     }

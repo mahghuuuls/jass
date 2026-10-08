@@ -1,6 +1,10 @@
 package com.mahghuuuls.jass.gameplay;
 
 import com.mahghuuuls.jass.Tags;
+import com.mahghuuuls.jass.api.JassActions;
+import com.mahghuuuls.jass.api.StaminaChangeEvent;
+import com.mahghuuuls.jass.api.StaminaCostEvent;
+import com.mahghuuuls.jass.api.StaminaPublicState;
 import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.config.ServerSettings;
 import com.mahghuuuls.jass.core.CostCalculator;
@@ -8,13 +12,15 @@ import com.mahghuuuls.jass.core.StaminaPool;
 import com.mahghuuuls.jass.core.StaminaProfile;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.MinecraftForge;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Locale;
 
 /**
- * The only path that changes a player's Stamina. Applies, in order: game-mode exemption, the
+ * The only path that changes a player's Stamina. Applies, in order: game-mode exemption and
+ * integration gating (both suspend costs and denials, never regeneration), the
  * start rule, the final cost, payment with the debt floor, and denial recording. Action hooks,
  * commands, and the API all come through here so these rules cannot diverge.
  */
@@ -33,6 +39,23 @@ public final class ActionGate {
         this.profiles = profiles;
     }
 
+    private volatile GatingSource gating = GatingSource.NONE;
+
+    /** Wires an integration that can suspend costs (Inhibited). */
+    public void useGating(GatingSource source) {
+        this.gating = source;
+    }
+
+    /** True while an integration suspends this player's costs (Inhibited without its effect). */
+    public boolean gated(EntityPlayer player) {
+        return gating.suspended(player);
+    }
+
+    /** True when actions cost this player nothing and are never denied for Stamina right now. */
+    private boolean costsSuspended(EntityPlayer player) {
+        return isExempt(player) || gated(player);
+    }
+
     /** True when the player spends no Stamina: players without a session, spectators, and (by default) Creative players. */
     public boolean isExempt(EntityPlayer player) {
         if (sessions.session(player) == null || player.isSpectator()) {
@@ -43,7 +66,7 @@ public final class ActionGate {
 
     /** True when the player may start a Stamina action now. */
     public boolean canStart(EntityPlayer player) {
-        if (isExempt(player)) {
+        if (costsSuspended(player)) {
             return true;
         }
         StaminaSession session = sessions.session(player);
@@ -62,7 +85,7 @@ public final class ActionGate {
 
     /** As {@link #tryDiscrete(EntityPlayer, ResourceLocation, double)}, with the weight multiplier for a Movement Action. */
     public boolean tryDiscrete(EntityPlayer player, ResourceLocation action, double baseCost, CostKind kind) {
-        if (isExempt(player)) {
+        if (costsSuspended(player)) {
             return true;
         }
         StaminaSession session = sessions.session(player);
@@ -72,9 +95,12 @@ public final class ActionGate {
         StaminaProfile profile = profiles.profile(player);
         ServerSettings settings = ConfigModel.server();
         double factors = factors(kind, profile, settings);
-        double finalCost = CostCalculator.finalDiscreteCost(baseCost, factors, settings.minDiscreteCost());
+        double finalCost = participate(player, action,
+                CostCalculator.finalDiscreteCost(baseCost, factors, settings.minDiscreteCost()));
         double floor = StaminaPool.debtFloor(profile.maximum(), settings.maxDebtFraction());
+        double before = session.pool.stamina();
         session.pool.payDiscrete(finalCost, floor, profile.regenerationDelay());
+        notifyChange(player, before, session.pool.stamina(), profile.maximum(), action);
         if (settings.debugLogging() && allowDebugLine(session, player.world.getTotalWorldTime())) {
             LOGGER.info("JASS spent player={} action={} cost={} internal={}",
                     player.getName(), action, format(finalCost), format(session.pool.stamina()));
@@ -92,7 +118,7 @@ public final class ActionGate {
      *         caller must stop it (a denial is recorded)
      */
     public boolean drainContinuous(EntityPlayer player, ResourceLocation action, double costPerSecond, CostKind kind) {
-        if (isExempt(player)) {
+        if (costsSuspended(player)) {
             return true;
         }
         StaminaSession session = sessions.session(player);
@@ -102,8 +128,11 @@ public final class ActionGate {
         StaminaProfile profile = profiles.profile(player);
         ServerSettings settings = ConfigModel.server();
         double factors = factors(kind, profile, settings);
+        double before = session.pool.stamina();
         double drained = session.pool.drainContinuous(
-                CostCalculator.continuousCost(costPerSecond, factors, SECONDS_PER_TICK), profile.regenerationDelay());
+                participate(player, action, CostCalculator.continuousCost(costPerSecond, factors, SECONDS_PER_TICK)),
+                profile.regenerationDelay());
+        notifyChange(player, before, session.pool.stamina(), profile.maximum(), action);
         if (settings.debugLogging() && allowDrainLine(session, player.world.getTotalWorldTime())) {
             LOGGER.info("JASS drained player={} action={} amount={} internal={}",
                     player.getName(), action, format(drained), format(session.pool.stamina()));
@@ -120,7 +149,7 @@ public final class ActionGate {
      * the player cannot start an action now. Never charges anything.
      */
     public void reportRefusedAttempt(EntityPlayer player, ResourceLocation action) {
-        if (!isExempt(player)) {
+        if (!costsSuspended(player)) {
             refuseIfCannotStart(player, sessions.session(player), action);
         }
     }
@@ -140,27 +169,85 @@ public final class ActionGate {
         if (session == null) {
             return null;
         }
-        return new StaminaReadout(session.pool, isExempt(player), profiles.profile(player),
+        return new StaminaReadout(session.pool, isExempt(player), gated(player), profiles.profile(player),
                 session.lastDenial, session.denialCount, session.guardBreakTicks);
     }
 
     /** Sets internal Stamina, clamped to the debt floor and maximum, and restarts the delay (operator and test use). */
     public void set(EntityPlayer player, double value) {
+        set(player, value, JassActions.COMMAND);
+    }
+
+    /** Sets internal Stamina within the debt floor and maximum, restarting the delay; false without a session. */
+    public boolean set(EntityPlayer player, double value, ResourceLocation cause) {
         StaminaSession session = sessions.session(player);
         if (session == null) {
-            return;
+            return false;
         }
         StaminaProfile profile = profiles.profile(player);
-        ServerSettings settings = ConfigModel.server();
-        double floor = StaminaPool.debtFloor(profile.maximum(), settings.maxDebtFraction());
-        session.pool.set(value, floor, profile.maximum(), profile.regenerationDelay());
+        double before = session.pool.stamina();
+        session.pool.set(value, debtFloor(profile), profile.maximum(), profile.regenerationDelay());
+        notifyChange(player, before, session.pool.stamina(), profile.maximum(), cause);
+        return true;
+    }
+
+    /** API: removes {@code amount} directly (no start rule, no efficiency), down to the debt floor. */
+    public boolean spendDirect(EntityPlayer player, double amount, ResourceLocation cause) {
+        StaminaSession session = sessions.session(player);
+        if (session == null) {
+            return false;
+        }
+        StaminaProfile profile = profiles.profile(player);
+        double before = session.pool.stamina();
+        session.pool.payDiscrete(Math.max(0.0, amount), debtFloor(profile), profile.regenerationDelay());
+        notifyChange(player, before, session.pool.stamina(), profile.maximum(), cause);
+        return true;
+    }
+
+    /** API: adds {@code amount} up to the maximum, leaving the delay as it is. */
+    public boolean restoreAmount(EntityPlayer player, double amount, ResourceLocation cause) {
+        StaminaSession session = sessions.session(player);
+        if (session == null) {
+            return false;
+        }
+        StaminaProfile profile = profiles.profile(player);
+        double before = session.pool.stamina();
+        session.pool.set(before + Math.max(0.0, amount), debtFloor(profile), profile.maximum(),
+                session.pool.delayRemaining());
+        notifyChange(player, before, session.pool.stamina(), profile.maximum(), cause);
+        return true;
+    }
+
+    private static double debtFloor(StaminaProfile profile) {
+        return StaminaPool.debtFloor(profile.maximum(), ConfigModel.server().maxDebtFraction());
+    }
+
+    /** Lets addons adjust or cancel a final cost (REQ-083); a cancelled event makes the action free. */
+    private static double participate(EntityPlayer player, ResourceLocation action, double cost) {
+        StaminaCostEvent event = new StaminaCostEvent(player, action, cost);
+        if (MinecraftForge.EVENT_BUS.post(event)) {
+            return 0.0;
+        }
+        return event.getCost();
+    }
+
+    /** Tells addons about a change (REQ-084); nothing is posted when the value did not change. */
+    private static void notifyChange(EntityPlayer player, double before, double after, double maximum,
+            ResourceLocation cause) {
+        if (before != after) {
+            MinecraftForge.EVENT_BUS.post(new StaminaChangeEvent(player, new StaminaPublicState(before, maximum),
+                    new StaminaPublicState(after, maximum), cause));
+        }
     }
 
     /** Fills Stamina to the player's maximum. */
     public void restore(EntityPlayer player) {
         StaminaSession session = sessions.session(player);
         if (session != null) {
-            session.pool.restore(profiles.profile(player).maximum());
+            double maximum = profiles.profile(player).maximum();
+            double before = session.pool.stamina();
+            session.pool.restore(maximum);
+            notifyChange(player, before, session.pool.stamina(), maximum, JassActions.COMMAND);
         }
     }
 
@@ -178,7 +265,7 @@ public final class ActionGate {
      * when the payment leaves Stamina at zero or below (REQ-037). Exempt players always block.
      */
     public BlockOutcome payBlock(EntityPlayer player, double baseCost) {
-        if (isExempt(player)) {
+        if (costsSuspended(player)) {
             return BlockOutcome.BLOCKED;
         }
         if (!tryDiscrete(player, JassActions.BLOCK, baseCost, CostKind.STANDARD)) {

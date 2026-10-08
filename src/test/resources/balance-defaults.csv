@@ -8,6 +8,8 @@ min_discrete_cost,1,stamina,>0,server,draft 10.6,Applies only when the configure
 sprint_cost,5,stamina per second,>=0,server,draft 10.7,Continuous; times weight multiplier and efficiency factor
 default_melee_cost,12,stamina,>=0,server,draft 10.8,Discrete; for any held item (or empty hand) without an override
 melee_cost_overrides,,list,namespace:item[@meta or @*]=cost lines,server,draft 10.32,No overrides by default
+item_stamina_modifiers,,list,namespace:item[@meta or @*]=field:value;... lines,server,draft 10.38,No rules ship by default (REQ-040)
+disabled_stamina_providers,,list,namespace:path provider ids,server,draft 10.39,All addon providers allowed by default (REQ-082)
 default_bow_draw_cost,8,stamina per second,>=0,server,draft 10.9,Continuous; for any bow-draw item without an override
 bow_draw_cost_overrides,,list,namespace:item[@meta or @*]=rate lines,server,CFG-3,No overrides by default; 0 means no drain and no interruption
 jump_cost,12,stamina,>=0,server,draft 10.10,Discrete; times weight multiplier and efficiency factor

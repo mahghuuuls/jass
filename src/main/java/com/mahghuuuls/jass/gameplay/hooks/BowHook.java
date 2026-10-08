@@ -4,7 +4,7 @@ import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.gameplay.ActionGate;
 import com.mahghuuuls.jass.gameplay.CostKind;
 import com.mahghuuuls.jass.gameplay.ItemKeys;
-import com.mahghuuuls.jass.gameplay.JassActions;
+import com.mahghuuuls.jass.api.JassActions;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemStack;

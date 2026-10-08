@@ -34,7 +34,7 @@ public final class ConfigModel {
                     JassConfig.maxDebtFraction, ConfigValues.DEFAULT_MAX_DEBT_FRACTION);
         }
         server = new ServerSettings(server.revision() + 1);
-        for (ItemValueRules list : server.itemLists()) {
+        for (ItemList list : server.itemLists()) {
             for (String warning : list.warnings()) {
                 LOGGER.warn(warning);
             }
@@ -43,7 +43,7 @@ public final class ConfigModel {
 
     /** Warns about list entries naming items that are not registered. Call once items exist. */
     public static void reportUnknownItems() {
-        for (ItemValueRules list : server.itemLists()) {
+        for (ItemList list : server.itemLists()) {
             for (String name : list.registryNames()) {
                 if (!ForgeRegistries.ITEMS.containsKey(new ResourceLocation(name))) {
                     LOGGER.warn("No item is registered as {}; its configuration entry has no effect", name);

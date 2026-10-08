@@ -1,5 +1,6 @@
 package com.mahghuuuls.jass.client;
 
+import com.mahghuuuls.jass.api.client.ClientStaminaSnapshot;
 import com.mahghuuuls.jass.network.JassNetwork;
 import com.mahghuuuls.jass.network.StaminaSnapshotMessage;
 import net.minecraft.client.Minecraft;
@@ -19,6 +20,7 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
     private static int denialCount;
     private static boolean jumpCostEnabled;
     private static boolean guardBroken;
+    private static boolean gated;
 
     private final FeedbackPlayer feedback;
 
@@ -42,6 +44,11 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
         return canSpend;
     }
 
+    /** True while Inhibited gating suspends costs for this player. */
+    public static boolean gated() {
+        return gated;
+    }
+
     /** True while Guard Break lasts. */
     public static boolean guardBroken() {
         return guardBroken;
@@ -50,6 +57,12 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
     /** True when the server charges ground jumps. */
     public static boolean jumpCostEnabled() {
         return jumpCostEnabled;
+    }
+
+    /** An immutable copy for the client API. */
+    static ClientStaminaSnapshot apiSnapshot() {
+        return new ClientStaminaSnapshot(received, visible, maximum, canSpend, gated,
+                guardBroken);
     }
 
     @Override
@@ -63,6 +76,7 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
             denialCount = message.denialCount();
             jumpCostEnabled = message.jumpCostEnabled();
             guardBroken = message.guardBroken();
+            gated = message.gated();
             if (newDenial) {
                 feedback.onDenied();
             }
@@ -79,6 +93,7 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
             denialCount = 0;
             jumpCostEnabled = false;
             guardBroken = false;
+            gated = false;
         });
     }
 }

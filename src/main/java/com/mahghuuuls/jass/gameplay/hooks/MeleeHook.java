@@ -5,7 +5,7 @@ import com.mahghuuuls.jass.core.SwingRateLimiter;
 import com.mahghuuuls.jass.gameplay.ActionGate;
 import com.mahghuuuls.jass.gameplay.AttackHandSource;
 import com.mahghuuuls.jass.gameplay.ItemKeys;
-import com.mahghuuuls.jass.gameplay.JassActions;
+import com.mahghuuuls.jass.api.JassActions;
 import com.mahghuuuls.jass.network.JassNetwork;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;

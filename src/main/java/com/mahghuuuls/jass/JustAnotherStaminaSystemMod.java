@@ -13,6 +13,7 @@ import com.mahghuuuls.jass.network.JassNetwork;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
+import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
@@ -25,7 +26,7 @@ import org.apache.logging.log4j.Logger;
         name = Tags.MOD_NAME,
         version = Tags.VERSION,
         acceptedMinecraftVersions = "[1.12.2]",
-        dependencies = "required-after:mixinbooter@[11.8,)")
+        dependencies = "required-after:mixinbooter@[11.8,);after:baubles@[1.5.2,)")
 public class JustAnotherStaminaSystemMod {
 
     public static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
@@ -57,6 +58,12 @@ public class JustAnotherStaminaSystemMod {
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         ConfigModel.reportUnknownItems();
+        Integrations.wire(JassGameplay.get());
+    }
+
+    @Mod.EventHandler
+    public void loadComplete(FMLLoadCompleteEvent event) {
+        JassGameplay.get().freezeApiRegistration();
     }
 
     @Mod.EventHandler

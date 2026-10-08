@@ -180,6 +180,24 @@ public final class JassConfig {
     @Config.RangeDouble(min = 0.0, max = 3600.0)
     public static double guardBreakCooldown = 2.0;
 
+    @Config.Name("item_stamina_modifiers")
+    @Config.Comment({
+            "Item Stamina Modifiers, one rule per line: namespace:item[@metadata or @*]=field:value;field:value",
+            "A rule applies while the item is worn in an armor slot, held in either hand, or worn in a bauble slot (Baubles or Bubbles).",
+            "Fields: flat_maximum, maximum_increase, maximum_reduction, flat_regeneration, regeneration_increase,",
+            "regeneration_reduction, flat_delay, delay_increase, delay_reduction, efficiency.",
+            "Increases and reductions are fractions (0.5 = 50 percent); reductions must be from 0 to 1.",
+            "Example: minecraft:golden_boots=flat_regeneration:25;delay_reduction:0.5"})
+    public static String[] itemStaminaModifiers = {};
+
+    @Config.Name("inhibited_integration")
+    @Config.Comment("With Inhibited installed: if true, Stamina costs apply only while the player has the Inhibited effect. No effect without Inhibited.")
+    public static boolean inhibitedIntegration = true;
+
+    @Config.Name("disabled_stamina_providers")
+    @Config.Comment("Addon Stamina modifier providers to ignore, one provider id per line (namespace:path). Empty allows all.")
+    public static String[] disabledStaminaProviders = {};
+
     @Config.Name("debug_logging")
     @Config.Comment("Write one server log line for each action denied for Stamina (rate-limited). For testing; off for normal play.")
     public static boolean debugLogging = false;

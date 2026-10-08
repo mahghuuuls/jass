@@ -2,7 +2,9 @@ package com.mahghuuuls.jass.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
+import com.mahghuuuls.jass.api.client.StaminaHudRenderEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
@@ -33,10 +35,18 @@ public final class HudPresenter {
         if (!ClientStaminaState.received() || ClientStaminaState.maximum() <= 0.0F) {
             return;
         }
+        ScaledResolution scaled = event.getResolution();
+        if (MinecraftForge.EVENT_BUS.post(new StaminaHudRenderEvent(ClientStaminaState.apiSnapshot(),
+                event.getPartialTicks(), scaled.getScaledWidth(), scaled.getScaledHeight()))) {
+            return; // An addon replaced every built-in display (REQ-085).
+        }
         float visible = ClientStaminaState.visible();
         float maximum = ClientStaminaState.maximum();
         boolean flashActive = feedback.flashActive();
         if (JassClientConfig.hudHideWhenFull && visible >= maximum && !flashActive) {
+            return;
+        }
+        if (JassClientConfig.hudHideOutsideInhibited && ClientStaminaState.gated() && !flashActive) {
             return;
         }
         ScaledResolution resolution = event.getResolution();

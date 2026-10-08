@@ -21,6 +21,10 @@ public final class JassClientConfig {
     @Config.Comment("Hide the Stamina display while Stamina is full.")
     public static boolean hudHideWhenFull = true;
 
+    @Config.Name("hud_hide_outside_inhibited")
+    @Config.Comment("With Inhibited gating active: hide the Stamina display while the player does not have the Inhibited effect.")
+    public static boolean hudHideOutsideInhibited = true;
+
     @Config.Name("denied_action_sound")
     @Config.Comment("Play a soft sound, at most once per second, when an action is refused for lack of Stamina.")
     public static boolean deniedActionSound = false;

@@ -4,7 +4,7 @@ import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.config.ServerSettings;
 import com.mahghuuuls.jass.gameplay.ActionGate;
 import com.mahghuuuls.jass.gameplay.CostKind;
-import com.mahghuuuls.jass.gameplay.JassActions;
+import com.mahghuuuls.jass.api.JassActions;
 import com.mahghuuuls.jass.network.JassNetwork;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;

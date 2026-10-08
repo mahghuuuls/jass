@@ -12,12 +12,13 @@ public final class StaminaReadout {
     private final boolean poolCanStart;
     private final double delayRemaining;
     private final boolean exempt;
+    private final boolean gated;
     private final StaminaProfile profile;
     private final DenialRecord lastDenial;
     private final int denialCount;
     private final int guardBreakTicks;
 
-    StaminaReadout(StaminaPool pool, boolean exempt, StaminaProfile profile, DenialRecord lastDenial,
+    StaminaReadout(StaminaPool pool, boolean exempt, boolean gated, StaminaProfile profile, DenialRecord lastDenial,
             int denialCount, int guardBreakTicks) {
         this.internal = pool.stamina();
         this.visible = pool.visible();
@@ -25,6 +26,7 @@ public final class StaminaReadout {
         this.poolCanStart = pool.canStart();
         this.delayRemaining = pool.delayRemaining();
         this.exempt = exempt;
+        this.gated = gated;
         this.profile = profile;
         this.lastDenial = lastDenial;
         this.denialCount = denialCount;
@@ -51,9 +53,14 @@ public final class StaminaReadout {
         return exempt;
     }
 
+    /** True while an integration suspends costs (Inhibited without its effect). */
+    public boolean gated() {
+        return gated;
+    }
+
     /** True when the player may start a Stamina action now. */
     public boolean canSpend() {
-        return exempt || poolCanStart;
+        return exempt || gated || poolCanStart;
     }
 
     public StaminaProfile profile() {

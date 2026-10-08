@@ -3,3 +3,19 @@
 
 // If you wish to use the default helper methods, uncomment the line below
 // apply from: 'gradle/scripts/helpers.gradle'
+
+// Development-only JASS API fixture mod (IMP-012). Compiled from src/fixture/java against the main
+// source set and put on the runClient/runServer classpath only; the release jar never contains it.
+sourceSets {
+    fixture {
+        java.srcDir 'src/fixture/java'
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+['runClient', 'runServer'].each { taskName ->
+    tasks.named(taskName, JavaExec).configure { JavaExec task ->
+        task.dependsOn('fixtureClasses')
+        task.classpath(sourceSets.fixture.output)
+    }
+}

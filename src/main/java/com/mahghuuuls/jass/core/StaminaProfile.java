@@ -1,6 +1,9 @@
 package com.mahghuuuls.jass.core;
 
-/** A player's resolved Stamina stats at one moment. */
+import java.util.Collections;
+import java.util.List;
+
+/** A player's resolved Stamina stats at one moment, with the contributions that produced them. */
 public final class StaminaProfile {
 
     private final double maximum;
@@ -9,9 +12,17 @@ public final class StaminaProfile {
     private final double efficiency;
     private final double effectiveWeight;
     private final String weightSource;
+    private final List<String> contributions;
 
     public StaminaProfile(double maximum, double regeneration, double regenerationDelay, double efficiency,
             double effectiveWeight, String weightSource) {
+        this(maximum, regeneration, regenerationDelay, efficiency, effectiveWeight, weightSource,
+                Collections.<String>emptyList());
+    }
+
+    public StaminaProfile(double maximum, double regeneration, double regenerationDelay, double efficiency,
+            double effectiveWeight, String weightSource, List<String> contributions) {
+        this.contributions = Collections.unmodifiableList(contributions);
         this.maximum = maximum;
         this.regeneration = regeneration;
         this.regenerationDelay = regenerationDelay;
@@ -39,6 +50,11 @@ public final class StaminaProfile {
     /** Weight of worn armor; multiplies Movement Action costs. */
     public double effectiveWeight() {
         return effectiveWeight;
+    }
+
+    /** One line per contributing item rule or provider, for {@code /stamina inspect}. */
+    public List<String> contributions() {
+        return contributions;
     }
 
     /** Where the weight came from, such as {@code standalone}. */

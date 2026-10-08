@@ -4,7 +4,7 @@ import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.core.SprintRules;
 import com.mahghuuuls.jass.gameplay.ActionGate;
 import com.mahghuuuls.jass.gameplay.CostKind;
-import com.mahghuuuls.jass.gameplay.JassActions;
+import com.mahghuuuls.jass.api.JassActions;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
