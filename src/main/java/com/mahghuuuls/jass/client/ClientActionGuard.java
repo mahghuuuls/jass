@@ -176,8 +176,14 @@ public final class ClientActionGuard {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
         ItemStack stack = event.getItemStack();
-        if (event.getWorld().isRemote && !ClientStaminaState.canSpend() && !stack.isEmpty()
-                && stack.getItemUseAction() == EnumAction.BOW) {
+        if (!event.getWorld().isRemote || stack.isEmpty()) {
+            return;
+        }
+        boolean refusedDraw = !ClientStaminaState.canSpend() && stack.getItemUseAction() == EnumAction.BOW;
+        // During Guard Break no blocking item may be raised; the server refuses it as well.
+        boolean refusedShield = ClientStaminaState.guardBroken()
+                && (stack.getItemUseAction() == EnumAction.BLOCK || stack.getItem().isShield(stack, event.getEntityPlayer()));
+        if (refusedDraw || refusedShield) {
             event.setCanceled(true);
         }
     }

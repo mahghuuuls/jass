@@ -36,17 +36,20 @@ final class SyncService {
         boolean canSpend = readout.canSpend();
         int denialCount = readout.denialCount();
         boolean jumpCostEnabled = ConfigModel.server().jumpCostEnabled();
+        boolean guardBroken = readout.guardBreakTicks() > 0;
         boolean changed = visible != session.lastSentVisible
                 || maximum != session.lastSentMaximum
                 || canSpend != session.lastSentCanSpend
                 || denialCount != session.lastSentDenialCount
-                || jumpCostEnabled != session.lastSentJumpCostEnabled;
+                || jumpCostEnabled != session.lastSentJumpCostEnabled
+                || guardBroken != session.lastSentGuardBroken;
         boolean throttleOpen = worldTick - session.lastSyncTick >= MIN_TICKS_BETWEEN_SENDS
                 || canSpend != session.lastSentCanSpend;
         if (!session.syncForced && !(changed && throttleOpen)) {
             return;
         }
-        JassNetwork.channel().sendTo(new StaminaSnapshotMessage(visible, maximum, canSpend, denialCount, jumpCostEnabled), player);
+        JassNetwork.channel().sendTo(new StaminaSnapshotMessage(visible, maximum, canSpend, denialCount, jumpCostEnabled,
+                guardBroken), player);
         session.syncForced = false;
         session.lastSyncTick = worldTick;
         session.lastSentVisible = visible;
@@ -54,5 +57,6 @@ final class SyncService {
         session.lastSentCanSpend = canSpend;
         session.lastSentDenialCount = denialCount;
         session.lastSentJumpCostEnabled = jumpCostEnabled;
+        session.lastSentGuardBroken = guardBroken;
     }
 }

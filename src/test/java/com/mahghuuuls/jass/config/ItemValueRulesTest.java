@@ -8,6 +8,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ItemValueRulesTest {
 
     @Test
+    void valuesAboveTheMaximumAreSkippedWithAWarning() {
+        ItemValueRules rules = ItemValueRules.parse("shield_melee_block",
+                new String[]{"minecraft:shield=1.5", "minecraft:iron_sword=0.5"}, 0.0, 1.0);
+        org.junit.jupiter.api.Assertions.assertEquals(1, rules.warnings().size());
+        org.junit.jupiter.api.Assertions.assertEquals(0.25,
+                rules.valueFor("minecraft:shield", 0, 0.25), 1e-9);
+        org.junit.jupiter.api.Assertions.assertEquals(0.5,
+                rules.valueFor("minecraft:iron_sword", 0, 0.25), 1e-9);
+    }
+
+    @Test
     void overrideAppliesAndOthersFallBack() {
         ItemValueRules rules = ItemValueRules.parse("melee", new String[]{"minecraft:iron_sword=20"}, 0.0);
         assertEquals(20.0, rules.valueFor("minecraft:iron_sword", 0, 12.0), 0.0);

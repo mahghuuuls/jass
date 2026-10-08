@@ -17,6 +17,8 @@ final class StaminaSession {
     long debugWindowStartTick = -20L;
     int debugLinesInWindow;
     long lastDrainLineTick = -20L;
+    /** Server ticks of Guard Break left; 0 when none. Never saved. */
+    int guardBreakTicks;
 
     boolean syncForced = true;
     long lastSyncTick = -SyncService.MIN_TICKS_BETWEEN_SENDS;
@@ -25,6 +27,7 @@ final class StaminaSession {
     boolean lastSentCanSpend;
     int lastSentDenialCount;
     boolean lastSentJumpCostEnabled;
+    boolean lastSentGuardBroken;
 
     StaminaSession(double initialStamina) {
         this.pool = new StaminaPool(initialStamina);

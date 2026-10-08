@@ -46,6 +46,7 @@ public final class StaminaSessionManager {
         StaminaSession session = session(player);
         if (session != null) {
             session.pool.restore(profiles.profile(player).maximum());
+            session.guardBreakTicks = 0;
             session.syncForced = true;
         }
     }

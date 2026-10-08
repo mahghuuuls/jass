@@ -18,6 +18,7 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
     private static boolean canSpend = true;
     private static int denialCount;
     private static boolean jumpCostEnabled;
+    private static boolean guardBroken;
 
     private final FeedbackPlayer feedback;
 
@@ -41,6 +42,11 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
         return canSpend;
     }
 
+    /** True while Guard Break lasts. */
+    public static boolean guardBroken() {
+        return guardBroken;
+    }
+
     /** True when the server charges ground jumps. */
     public static boolean jumpCostEnabled() {
         return jumpCostEnabled;
@@ -56,6 +62,7 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
             canSpend = message.canSpend();
             denialCount = message.denialCount();
             jumpCostEnabled = message.jumpCostEnabled();
+            guardBroken = message.guardBroken();
             if (newDenial) {
                 feedback.onDenied();
             }
@@ -71,6 +78,7 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
             canSpend = true;
             denialCount = 0;
             jumpCostEnabled = false;
+            guardBroken = false;
         });
     }
 }

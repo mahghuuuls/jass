@@ -26,6 +26,11 @@ public final class ItemValueRules {
     }
 
     public static ItemValueRules parse(String listName, String[] lines, double minimum) {
+        return parse(listName, lines, minimum, Double.POSITIVE_INFINITY);
+    }
+
+    /** As {@link #parse(String, String[], double)}, also skipping values above {@code maximum}. */
+    public static ItemValueRules parse(String listName, String[] lines, double minimum, double maximum) {
         Map<String, Double> values = new HashMap<>();
         List<String> warnings = new ArrayList<>();
         for (String raw : lines) {
@@ -48,8 +53,10 @@ public final class ItemValueRules {
                 } else {
                     try {
                         value = Double.valueOf(valuePart);
-                        if (value.isNaN() || value.isInfinite() || value < minimum) {
-                            problem = "value must be a number of at least " + minimum;
+                        if (value.isNaN() || value.isInfinite() || value < minimum || value > maximum) {
+                            problem = maximum == Double.POSITIVE_INFINITY
+                                    ? "value must be a number of at least " + minimum
+                                    : "value must be a number from " + minimum + " to " + maximum;
                         }
                     } catch (NumberFormatException e) {
                         problem = "value is not a number";

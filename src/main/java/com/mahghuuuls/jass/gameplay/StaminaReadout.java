@@ -15,9 +15,10 @@ public final class StaminaReadout {
     private final StaminaProfile profile;
     private final DenialRecord lastDenial;
     private final int denialCount;
+    private final int guardBreakTicks;
 
     StaminaReadout(StaminaPool pool, boolean exempt, StaminaProfile profile, DenialRecord lastDenial,
-            int denialCount) {
+            int denialCount, int guardBreakTicks) {
         this.internal = pool.stamina();
         this.visible = pool.visible();
         this.debt = pool.debt();
@@ -27,6 +28,7 @@ public final class StaminaReadout {
         this.profile = profile;
         this.lastDenial = lastDenial;
         this.denialCount = denialCount;
+        this.guardBreakTicks = guardBreakTicks;
     }
 
     public double internal() {
@@ -61,6 +63,11 @@ public final class StaminaReadout {
     /** The last action JASS refused, or {@code null} if none since login. */
     public DenialRecord lastDenial() {
         return lastDenial;
+    }
+
+    /** Server ticks of Guard Break left; 0 when none. */
+    public int guardBreakTicks() {
+        return guardBreakTicks;
     }
 
     /** Number of denials since login; the client flashes when it changes. */

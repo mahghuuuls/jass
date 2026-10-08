@@ -25,6 +25,14 @@ public final class CostCalculator {
         return stabilityScale / (stabilityScale + Math.max(0.0, stability));
     }
 
+    /**
+     * Base cost of a Shield Block before efficiency and the minimum cost: the incoming damage
+     * (difficulty-scaled, before armor) times Stamina per damage point times the Stability factor.
+     */
+    public static double blockBaseCost(double incomingDamage, double staminaPerDamage, double stabilityFactor) {
+        return Math.max(0.0, incomingDamage) * Math.max(0.0, staminaPerDamage) * stabilityFactor;
+    }
+
     /** Amount a Continuous Action drains in {@code seconds}: cost per second times all factors. */
     public static double continuousCost(double costPerSecond, double factors, double seconds) {
         return Math.max(0.0, costPerSecond) * factors * seconds;

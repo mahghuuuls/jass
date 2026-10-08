@@ -141,7 +141,7 @@ public final class ActionGate {
             return null;
         }
         return new StaminaReadout(session.pool, isExempt(player), profiles.profile(player),
-                session.lastDenial, session.denialCount);
+                session.lastDenial, session.denialCount, session.guardBreakTicks);
     }
 
     /** Sets internal Stamina, clamped to the debt floor and maximum, and restarts the delay (operator and test use). */
@@ -164,11 +164,53 @@ public final class ActionGate {
         }
     }
 
-    /** Advances regeneration for one server tick. */
+    /** Result of a Shield Block that vanilla decided to make. */
+    public enum BlockOutcome {
+        /** Refused at zero or below: the hit is not blocked (a denial is recorded). */
+        REFUSED,
+        BLOCKED,
+        /** Blocked and paid, and the payment left Stamina at zero or below: Guard Break started. */
+        BLOCKED_GUARD_BREAK
+    }
+
+    /**
+     * Pays a Shield Block as a Discrete Action (which may create debt) and starts Guard Break
+     * when the payment leaves Stamina at zero or below (REQ-037). Exempt players always block.
+     */
+    public BlockOutcome payBlock(EntityPlayer player, double baseCost) {
+        if (isExempt(player)) {
+            return BlockOutcome.BLOCKED;
+        }
+        if (!tryDiscrete(player, JassActions.BLOCK, baseCost, CostKind.STANDARD)) {
+            return BlockOutcome.REFUSED;
+        }
+        StaminaSession session = sessions.session(player);
+        if (session.pool.canStart()) {
+            return BlockOutcome.BLOCKED;
+        }
+        session.guardBreakTicks = Math.max(1, (int) Math.round(ConfigModel.server().guardBreakCooldown() * TICKS_PER_SECOND));
+        session.syncForced = true;
+        if (ConfigModel.server().debugLogging()) {
+            LOGGER.info("JASS guard_break player={} ticks={} internal={}",
+                    player.getName(), session.guardBreakTicks, format(session.pool.stamina()));
+        }
+        return BlockOutcome.BLOCKED_GUARD_BREAK;
+    }
+
+    /** True while the player's Guard Break lasts: no blocking item may be raised or block. */
+    public boolean guardBroken(EntityPlayer player) {
+        StaminaSession session = sessions.session(player);
+        return session != null && session.guardBreakTicks > 0;
+    }
+
+    /** Advances regeneration and the Guard Break timer for one server tick. */
     void tick(EntityPlayer player, double seconds) {
         StaminaSession session = sessions.session(player);
         if (session == null) {
             return;
+        }
+        if (session.guardBreakTicks > 0) {
+            session.guardBreakTicks--;
         }
         StaminaProfile profile = profiles.profile(player);
         session.pool.tick(seconds, profile.regeneration(), profile.maximum());

@@ -22,6 +22,15 @@ public final class ServerSettings {
     private final ItemValueRules meleeCosts;
     private final double defaultBowDrawCost;
     private final ItemValueRules bowDrawCosts;
+    private final double blockStaminaPerDamage;
+    private final double stabilityScale;
+    private final ItemValueRules shieldStability;
+    private final double defaultShieldStability;
+    private final ItemValueRules shieldMeleeBlock;
+    private final ItemValueRules shieldProjectileBlock;
+    private final double defaultShieldMeleeBlock;
+    private final double defaultShieldProjectileBlock;
+    private final double guardBreakCooldown;
     private final boolean debugLogging;
 
     ServerSettings(int revision) {
@@ -44,6 +53,16 @@ public final class ServerSettings {
         this.meleeCosts = ItemValueRules.parse("melee_cost_overrides", JassConfig.meleeCostOverrides, 0.0);
         this.defaultBowDrawCost = JassConfig.defaultBowDrawCost;
         this.bowDrawCosts = ItemValueRules.parse("bow_draw_cost_overrides", JassConfig.bowDrawCostOverrides, 0.0);
+        this.blockStaminaPerDamage = JassConfig.blockStaminaPerDamage;
+        this.stabilityScale = JassConfig.stabilityScale;
+        this.shieldStability = ItemValueRules.parse("shield_stability", JassConfig.shieldStability, 0.0);
+        this.defaultShieldStability = JassConfig.defaultShieldStability;
+        this.shieldMeleeBlock = ItemValueRules.parse("shield_melee_block", JassConfig.shieldMeleeBlock, 0.0, 1.0);
+        this.shieldProjectileBlock = ItemValueRules.parse("shield_projectile_block", JassConfig.shieldProjectileBlock,
+                0.0, 1.0);
+        this.defaultShieldMeleeBlock = JassConfig.defaultShieldMeleeBlock;
+        this.defaultShieldProjectileBlock = JassConfig.defaultShieldProjectileBlock;
+        this.guardBreakCooldown = JassConfig.guardBreakCooldown;
         this.debugLogging = JassConfig.debugLogging;
     }
 
@@ -123,12 +142,41 @@ public final class ServerSettings {
         return bowDrawCosts.valueFor(registryName, metadata, defaultBowDrawCost);
     }
 
+    public double blockStaminaPerDamage() {
+        return blockStaminaPerDamage;
+    }
+
+    public double stabilityScale() {
+        return stabilityScale;
+    }
+
+    /** Stability of the named blocking item, or the default for items without an entry. */
+    public double shieldStability(String registryName, int metadata) {
+        return shieldStability.valueFor(registryName, metadata, defaultShieldStability);
+    }
+
+    /** Fraction of a blocked melee hit the named blocking item stops. */
+    public double shieldMeleeBlock(String registryName, int metadata) {
+        return shieldMeleeBlock.valueFor(registryName, metadata, defaultShieldMeleeBlock);
+    }
+
+    /** Fraction of a blocked projectile hit the named blocking item stops. */
+    public double shieldProjectileBlock(String registryName, int metadata) {
+        return shieldProjectileBlock.valueFor(registryName, metadata, defaultShieldProjectileBlock);
+    }
+
+    /** Guard Break length in seconds. */
+    public double guardBreakCooldown() {
+        return guardBreakCooldown;
+    }
+
     public boolean debugLogging() {
         return debugLogging;
     }
 
     /** Every parsed per-item list, for warnings and unknown-item checks. */
     public ItemValueRules[] itemLists() {
-        return new ItemValueRules[]{meleeCosts, bowDrawCosts, armorWeights};
+        return new ItemValueRules[]{meleeCosts, bowDrawCosts, armorWeights, shieldStability, shieldMeleeBlock,
+                shieldProjectileBlock};
     }
 }

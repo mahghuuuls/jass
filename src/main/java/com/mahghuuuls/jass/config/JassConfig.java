@@ -125,6 +125,61 @@ public final class JassConfig {
             "interrupted (it still cannot start at zero Stamina). Metadata is ignored for items with durability."})
     public static String[] bowDrawCostOverrides = {};
 
+    @Config.Name("block_stamina_per_damage")
+    @Config.Comment("Stamina a Shield Block costs per point of incoming damage (after difficulty, before armor), before Stability and efficiency.")
+    @Config.RangeDouble(min = 0.0, max = 1000.0)
+    public static double blockStaminaPerDamage = 1.0;
+
+    @Config.Name("stability_scale")
+    @Config.Comment("Diminishing-returns constant for shield Stability: block costs are multiplied by scale / (scale + Stability).")
+    @Config.RangeDouble(min = 0.001, max = 100000.0)
+    public static double stabilityScale = 100.0;
+
+    @Config.Name("shield_stability")
+    @Config.Comment({
+            "Stability of blocking items, one entry per line: namespace:item[@metadata or @*]=stability",
+            "Higher Stability makes blocks cheaper. Items without an entry use default_shield_stability.",
+            "Metadata is ignored for items with durability."})
+    public static String[] shieldStability = {
+            "minecraft:shield=50"
+    };
+
+    @Config.Name("default_shield_stability")
+    @Config.Comment("Stability of a blocking item that has no shield_stability entry.")
+    @Config.RangeDouble(min = 0.0, max = 100000.0)
+    public static double defaultShieldStability = 0.0;
+
+    @Config.Name("shield_melee_block")
+    @Config.Comment({
+            "Fraction of a blocked direct melee hit that a blocking item stops, one entry per line: namespace:item[@metadata or @*]=fraction",
+            "1.0 blocks everything (vanilla); 0.7 lets 30 percent of the hit through. Items without an entry use default_shield_melee_block."})
+    public static String[] shieldMeleeBlock = {
+            "minecraft:shield=1.0"
+    };
+
+    @Config.Name("shield_projectile_block")
+    @Config.Comment({
+            "Fraction of a blocked projectile hit that a blocking item stops, one entry per line: namespace:item[@metadata or @*]=fraction",
+            "Items without an entry use default_shield_projectile_block."})
+    public static String[] shieldProjectileBlock = {
+            "minecraft:shield=1.0"
+    };
+
+    @Config.Name("default_shield_melee_block")
+    @Config.Comment("Melee block fraction of a blocking item without a shield_melee_block entry (1.0 = vanilla full block).")
+    @Config.RangeDouble(min = 0.0, max = 1.0)
+    public static double defaultShieldMeleeBlock = 1.0;
+
+    @Config.Name("default_shield_projectile_block")
+    @Config.Comment("Projectile block fraction of a blocking item without a shield_projectile_block entry (1.0 = vanilla full block).")
+    @Config.RangeDouble(min = 0.0, max = 1.0)
+    public static double defaultShieldProjectileBlock = 1.0;
+
+    @Config.Name("guard_break_cooldown")
+    @Config.Comment("Seconds a player cannot raise any blocking item after a block leaves Stamina at zero or below (Guard Break).")
+    @Config.RangeDouble(min = 0.0, max = 3600.0)
+    public static double guardBreakCooldown = 2.0;
+
     @Config.Name("debug_logging")
     @Config.Comment("Write one server log line for each action denied for Stamina (rate-limited). For testing; off for normal play.")
     public static boolean debugLogging = false;

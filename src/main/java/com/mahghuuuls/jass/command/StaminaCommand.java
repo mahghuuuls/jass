@@ -107,6 +107,7 @@ public final class StaminaCommand extends CommandBase {
                 + " weight=" + format(profile.effectiveWeight())
                 + " weightSource=" + profile.weightSource()
                 + " spending=" + (readout.exempt() ? "exempt" : "active")
+                + " guardBreak=" + format(readout.guardBreakTicks() / 20.0)
                 + " lastDenial=" + denial(readout.lastDenial(), player.world.getTotalWorldTime());
     }
 

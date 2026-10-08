@@ -56,6 +56,30 @@ class CostCalculatorTest {
     }
 
     @Test
+    void vanillaShieldBlocksAThreeDamageZombieHitForTwo() {
+        double base = CostCalculator.blockBaseCost(3.0, 1.0, CostCalculator.stabilityFactor(100.0, 50.0));
+        assertEquals(2.0, CostCalculator.finalDiscreteCost(base, 1.0, 1.0), EPS);
+    }
+
+    @Test
+    void hardDifficultyZombieHitCostsThree() {
+        double base = CostCalculator.blockBaseCost(4.5, 1.0, CostCalculator.stabilityFactor(100.0, 50.0));
+        assertEquals(3.0, CostCalculator.finalDiscreteCost(base, 1.0, 1.0), EPS);
+    }
+
+    @Test
+    void stabilityZeroLeavesTheFullDamageAsCost() {
+        double base = CostCalculator.blockBaseCost(3.0, 1.0, CostCalculator.stabilityFactor(100.0, 0.0));
+        assertEquals(3.0, CostCalculator.finalDiscreteCost(base, 1.0, 1.0), EPS);
+    }
+
+    @Test
+    void zeroStaminaPerDamageMakesBlocksFree() {
+        double base = CostCalculator.blockBaseCost(9.0, 0.0, CostCalculator.stabilityFactor(100.0, 50.0));
+        assertEquals(0.0, CostCalculator.finalDiscreteCost(base, 1.0, 1.0), EPS);
+    }
+
+    @Test
     void negativeStabilityCountsAsZero() {
         assertEquals(1.0, CostCalculator.stabilityFactor(100.0, -10.0), EPS);
     }

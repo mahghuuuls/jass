@@ -7,6 +7,7 @@ import com.mahghuuuls.jass.gameplay.JassGameplay;
 import com.mahghuuuls.jass.gameplay.hooks.BowHook;
 import com.mahghuuuls.jass.gameplay.hooks.JumpHook;
 import com.mahghuuuls.jass.gameplay.hooks.MeleeHook;
+import com.mahghuuuls.jass.gameplay.hooks.ShieldHook;
 import com.mahghuuuls.jass.gameplay.hooks.SprintHook;
 import com.mahghuuuls.jass.network.JassNetwork;
 import net.minecraftforge.common.MinecraftForge;
@@ -48,6 +49,7 @@ public class JustAnotherStaminaSystemMod {
         JumpHook jump = new JumpHook(gameplay.gate());
         MinecraftForge.EVENT_BUS.register(jump);
         JassNetwork.setJumpSink(jump);
+        MinecraftForge.EVENT_BUS.register(ShieldHook.install(gameplay.gate()));
         proxy.preInit();
         LOGGER.info("{} {} loaded", Tags.MOD_NAME, Tags.VERSION);
     }
