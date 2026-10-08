@@ -11,8 +11,9 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 /**
  * Drains Stamina for each server tick a player sprints where sprinting costs Stamina, and stops
- * the sprint on the server when Stamina is gone (a backstop: the client refuses to sprint on its
- * own). Where sprinting is free is decided by {@link SprintRules}.
+ * the sprint on the server on the tick Stamina reaches zero (the client then refuses to start a
+ * sprint on its own until it may spend again). Where sprinting is free is decided by
+ * {@link SprintRules}.
  */
 public final class SprintHook {
 

@@ -25,10 +25,11 @@ import java.util.WeakHashMap;
 public final class BowHook {
 
     /**
-     * Vanilla retries a held right click every 4 ticks. Refusals closer together than this are one
-     * held attempt and record one denial, so holding a bow at zero flashes once.
+     * Vanilla retries a held right click every 4 ticks; packets can arrive further apart. Refusals
+     * closer together than this, and a refusal right after a draw ran out, are one held attempt
+     * and record one denial, so holding a bow at zero flashes once.
      */
-    private static final long HELD_RETRY_GAP_TICKS = 5L;
+    private static final long HELD_RETRY_GAP_TICKS = 10L;
 
     private final ActionGate gate;
     /** Server thread only; entries go away with the player entity. */
@@ -69,8 +70,10 @@ public final class BowHook {
         }
         double rate = ConfigModel.server().bowDrawCost(ItemKeys.registryName(stack), ItemKeys.metadata(stack));
         if (rate > 0.0 && !gate.drainContinuous(player, JassActions.BOW, rate, CostKind.STANDARD)) {
-            // Clears the draw without the release path, so no arrow is fired or used up.
+            // Clears the draw without the release path, so no arrow is fired or used up. The gate
+            // recorded the denial; a held right click retrying next is the same attempt.
             player.resetActiveHand();
+            lastRefusedTick.put(player, player.world.getTotalWorldTime());
         }
     }
 

@@ -85,8 +85,8 @@ public final class ActionGate {
     /**
      * Drains one server tick of a Continuous Action. Allowed only while Stamina is above zero;
      * drains at most down to zero (never into debt) and pauses regeneration for the tick. The tick
-     * that reaches zero still returns {@code true}; the next one returns {@code false}, so running
-     * out counts as one denial and the action stops at most one tick late.
+     * that reaches zero records one denial and returns {@code false}, so the action stops on that
+     * tick, on the server, before the client can stop it on its own (which would leave no denial).
      *
      * @return {@code true} if the action may continue; {@code false} if Stamina is gone and the
      *         caller must stop it (a denial is recorded)
@@ -107,6 +107,10 @@ public final class ActionGate {
         if (settings.debugLogging() && allowDrainLine(session, player.world.getTotalWorldTime())) {
             LOGGER.info("JASS drained player={} action={} amount={} internal={}",
                     player.getName(), action, format(drained), format(session.pool.stamina()));
+        }
+        if (!session.pool.canStart()) {
+            deny(player, session, action, DenialRecord.INSUFFICIENT_STAMINA);
+            return false;
         }
         return true;
     }
