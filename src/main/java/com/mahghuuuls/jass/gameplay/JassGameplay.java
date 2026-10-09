@@ -52,6 +52,11 @@ public final class JassGameplay {
         api.freezeRegistration();
     }
 
+    /** Wires an integration's weight source (Elenai). */
+    public void useWeightSource(WeightSource source) {
+        profiles.preferWeightSource(source);
+    }
+
     /** Wires an integration's extra active slots (Baubles). */
     public void useExtraSlots(ExtraSlotSource source) {
         profiles.addExtraSlots(source);

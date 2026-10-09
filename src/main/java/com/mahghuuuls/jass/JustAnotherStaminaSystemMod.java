@@ -26,10 +26,12 @@ import org.apache.logging.log4j.Logger;
         name = Tags.MOD_NAME,
         version = Tags.VERSION,
         acceptedMinecraftVersions = "[1.12.2]",
-        dependencies = "required-after:mixinbooter@[11.8,);after:baubles@[1.5.2,)")
+        dependencies = "required-after:mixinbooter@[11.8,);after:baubles@[1.5.2,);after:elenaidodge2@[1.1.0,)")
 public class JustAnotherStaminaSystemMod {
 
     public static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
+
+    private MeleeHook melee;
 
     @SidedProxy(
             clientSide = "com.mahghuuuls.jass.client.ClientProxy",
@@ -42,7 +44,7 @@ public class JustAnotherStaminaSystemMod {
         MinecraftForge.EVENT_BUS.register(new ConfigModel.ChangeListener());
         JassNetwork.register();
         JassGameplay gameplay = JassGameplay.create();
-        MeleeHook melee = new MeleeHook(gameplay.gate(), AttackHandSource.MAIN_HAND);
+        melee = new MeleeHook(gameplay.gate(), AttackHandSource.MAIN_HAND);
         MinecraftForge.EVENT_BUS.register(melee);
         JassNetwork.setServerSink(melee);
         MinecraftForge.EVENT_BUS.register(new SprintHook(gameplay.gate()));
@@ -58,7 +60,7 @@ public class JustAnotherStaminaSystemMod {
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         ConfigModel.reportUnknownItems();
-        Integrations.wire(JassGameplay.get());
+        Integrations.wire(JassGameplay.get(), melee);
     }
 
     @Mod.EventHandler

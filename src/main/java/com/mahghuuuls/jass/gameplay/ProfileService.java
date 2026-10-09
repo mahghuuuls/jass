@@ -57,6 +57,11 @@ public final class ProfileService {
         return cached.profile;
     }
 
+    /** Wires an integration's weight source, such as Elenai; the standalone weight stays the fallback. */
+    void preferWeightSource(WeightSource source) {
+        weights.prefer(source);
+    }
+
     /** Wires an integration's extra active slots, such as Baubles. */
     void addExtraSlots(ExtraSlotSource source) {
         slots.addSource(source);

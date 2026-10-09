@@ -10,6 +10,8 @@ public final class JassActions {
     public static final ResourceLocation BOW = new ResourceLocation("jass", "bow");
     public static final ResourceLocation JUMP = new ResourceLocation("jass", "jump");
     public static final ResourceLocation BLOCK = new ResourceLocation("jass", "block");
+    /** An Elenai Dodge 2 dodge, when that integration is on. */
+    public static final ResourceLocation DODGE = new ResourceLocation("jass", "dodge");
     /** Cause of {@code /stamina set} and {@code /stamina restore}. */
     public static final ResourceLocation COMMAND = new ResourceLocation("jass", "command");
 

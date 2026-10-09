@@ -53,6 +53,15 @@ dependencies {
     compileOnly rfg.deobf('curse.maven:baubles-227083:2518667')
     runtimeOnly rfg.deobf('curse.maven:baubles-227083:2518667')
 
+    // Elenai Dodge 2 1.1.0 for compat.elenai: compile against it (never packaged; optional at runtime,
+    // declared after:elenaidodge2@[1.1.0,)). CurseMaven file 3343308 has the SHA-256 of the inspected
+    // ElenaiDodge2-1.12.2-1.1.0.jar, 98a58dfcb6096e855c88027c70c194a8bdbd98397ca767588bb56fc1350b1984 (DEPREF-003).
+    compileOnly rfg.deobf('curse.maven:elenai-dodge-2-442962:3343308')
+    // Loaded in the development runtime only while the copied jar sits in libs/ (the dodge cards).
+    if (file('libs/ElenaiDodge2-1.12.2-1.1.0.jar').exists()) {
+        runtimeOnly rfg.deobf(files('libs/ElenaiDodge2-1.12.2-1.1.0.jar'))
+    }
+
     // Inhibited, development runtime only for the gating cards; never packaged or declared
     // (JASS finds it by registry id). Copied out of the owner's TestPACK, which stays read-only:
     //   Inhibited-1.2.0.jar, sha256 f330fda62706a8237d9b5e86fc1e953e2ec3c4e752345a629a6ce75c7b0e45c7

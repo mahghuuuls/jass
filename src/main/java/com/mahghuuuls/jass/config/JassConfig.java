@@ -198,6 +198,28 @@ public final class JassConfig {
     @Config.Comment("Addon Stamina modifier providers to ignore, one provider id per line (namespace:path). Empty allows all.")
     public static String[] disabledStaminaProviders = {};
 
+    @Config.Name("rlcombat_integration")
+    @Config.Comment("With RLCombat installed: if true, RLCombat off-hand attacks cost the off-hand item's melee cost. If false, every attack uses the main-hand item.")
+    public static boolean rlcombatIntegration = true;
+
+    @Config.Name("elenai_dodge_resource_integration")
+    @Config.Comment("With Elenai Dodge 2 installed: if true, each dodge costs Stamina (elenai_dodge_base_cost, times weight and efficiency) instead of feathers, and is refused at zero Stamina.")
+    public static boolean elenaiDodgeResourceIntegration = true;
+
+    @Config.Name("elenai_dodge_base_cost")
+    @Config.Comment("Stamina cost of one Elenai dodge before the weight multiplier and efficiency.")
+    @Config.RangeDouble(min = 0.0, max = 100000.0)
+    public static double elenaiDodgeBaseCost = 10.0;
+
+    @Config.Name("elenai_weight_source_integration")
+    @Config.Comment("With Elenai Dodge 2 installed: if true, Effective Weight comes from Elenai's armor weight (its config and formula, computed on the server) instead of JASS's armor_weight list.")
+    public static boolean elenaiWeightSourceIntegration = true;
+
+    @Config.Name("elenai_weight_conversion")
+    @Config.Comment("JASS weight per Elenai weight unit. Full diamond is 16 Elenai units: 16 x 1.4 = 22.4.")
+    @Config.RangeDouble(min = 0.0, max = 1000.0)
+    public static double elenaiWeightConversion = 1.4;
+
     @Config.Name("debug_logging")
     @Config.Comment("Write one server log line for each action denied for Stamina (rate-limited). For testing; off for normal play.")
     public static boolean debugLogging = false;

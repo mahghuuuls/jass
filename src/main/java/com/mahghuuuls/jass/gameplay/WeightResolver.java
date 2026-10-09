@@ -10,6 +10,8 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.ISpecialArmor;
 
+import java.util.function.DoubleSupplier;
+
 /**
  * The only owner of weight-source policy (REQ-012, REQ-071): asks the preferred source and falls
  * back to the standalone calculation when it declines. Also the standalone source itself: the sum
@@ -32,13 +34,18 @@ final class WeightResolver implements WeightSource {
 
     /** The player's Effective Weight and the id of the source that gave it. */
     Resolved resolve(EntityPlayer player) {
-        if (preferred != this) {
-            double weight = preferred.effectiveWeight(player);
-            if (!Double.isNaN(weight) && weight >= 0.0) {
-                return new Resolved(weight, preferred.id());
-            }
+        if (preferred == this) {
+            return new Resolved(effectiveWeight(player), STANDALONE);
         }
-        return new Resolved(effectiveWeight(player), STANDALONE);
+        return choose(preferred.effectiveWeight(player), preferred.id(), () -> effectiveWeight(player));
+    }
+
+    /** The preferred source's weight when it is usable (a number, not negative), else the standalone weight. */
+    static Resolved choose(double preferredWeight, String preferredId, DoubleSupplier standalone) {
+        if (!Double.isNaN(preferredWeight) && preferredWeight >= 0.0) {
+            return new Resolved(preferredWeight, preferredId);
+        }
+        return new Resolved(standalone.getAsDouble(), STANDALONE);
     }
 
     @Override

@@ -39,6 +39,11 @@ public final class ServerSettings {
     private final ItemModifierRules itemModifiers;
     private final boolean inhibitedIntegration;
     private final Set<String> disabledProviders;
+    private final boolean rlcombatIntegration;
+    private final boolean elenaiDodgeResourceIntegration;
+    private final double elenaiDodgeBaseCost;
+    private final boolean elenaiWeightSourceIntegration;
+    private final double elenaiWeightConversion;
     private final boolean debugLogging;
 
     ServerSettings(int revision) {
@@ -80,6 +85,11 @@ public final class ServerSettings {
             }
         }
         this.disabledProviders = Collections.unmodifiableSet(disabled);
+        this.rlcombatIntegration = JassConfig.rlcombatIntegration;
+        this.elenaiDodgeResourceIntegration = JassConfig.elenaiDodgeResourceIntegration;
+        this.elenaiDodgeBaseCost = JassConfig.elenaiDodgeBaseCost;
+        this.elenaiWeightSourceIntegration = JassConfig.elenaiWeightSourceIntegration;
+        this.elenaiWeightConversion = JassConfig.elenaiWeightConversion;
         this.debugLogging = JassConfig.debugLogging;
     }
 
@@ -199,6 +209,26 @@ public final class ServerSettings {
     /** True when the server configuration disables this addon provider id (REQ-082). */
     public boolean providerDisabled(String providerId) {
         return disabledProviders.contains(providerId.toLowerCase(Locale.ROOT));
+    }
+
+    public boolean rlcombatIntegration() {
+        return rlcombatIntegration;
+    }
+
+    public boolean elenaiDodgeResourceIntegration() {
+        return elenaiDodgeResourceIntegration;
+    }
+
+    public double elenaiDodgeBaseCost() {
+        return elenaiDodgeBaseCost;
+    }
+
+    public boolean elenaiWeightSourceIntegration() {
+        return elenaiWeightSourceIntegration;
+    }
+
+    public double elenaiWeightConversion() {
+        return elenaiWeightConversion;
     }
 
     public boolean debugLogging() {

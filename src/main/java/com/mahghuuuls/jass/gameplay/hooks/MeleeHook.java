@@ -1,5 +1,6 @@
 package com.mahghuuuls.jass.gameplay.hooks;
 
+import com.mahghuuuls.jass.Tags;
 import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.core.SwingRateLimiter;
 import com.mahghuuuls.jass.gameplay.ActionGate;
@@ -10,9 +11,13 @@ import com.mahghuuuls.jass.network.JassNetwork;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumHand;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -24,13 +29,20 @@ import java.util.WeakHashMap;
  */
 public final class MeleeHook implements JassNetwork.ServerInputSink {
 
+    private static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
+
     /** Vanilla lets a Survival player swing at air at most once every 10 ticks. */
     private static final int VANILLA_MISS_INTERVAL_TICKS = 10;
     private static final int MISS_BURST = 1;
 
     private final ActionGate gate;
-    private final AttackHandSource hands;
+    private volatile AttackHandSource hands;
     private final Map<EntityPlayer, SwingRateLimiter> airSwingLimiters = new WeakHashMap<>();
+
+    /** Wires a combat mod's hand source, such as RLCombat's off-hand attacks. */
+    public void useHandSource(AttackHandSource source) {
+        this.hands = source;
+    }
 
     public MeleeHook(ActionGate gate, AttackHandSource hands) {
         this.gate = gate;
@@ -47,7 +59,12 @@ public final class MeleeHook implements JassNetwork.ServerInputSink {
         if (player.world.isRemote) {
             return;
         }
-        ItemStack stack = player.getHeldItem(hands.handOf(event));
+        EnumHand hand = hands.handOf(event);
+        ItemStack stack = player.getHeldItem(hand);
+        if (ConfigModel.server().debugLogging()) {
+            LOGGER.info("JASS melee player={} hand={} item={}", player.getName(),
+                    hand == EnumHand.OFF_HAND ? "off_hand" : "main_hand", ItemKeys.registryName(stack));
+        }
         if (!gate.tryDiscrete(player, JassActions.MELEE, meleeCost(stack))) {
             event.setCanceled(true);
         }
