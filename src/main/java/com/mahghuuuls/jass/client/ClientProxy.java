@@ -1,6 +1,7 @@
 package com.mahghuuuls.jass.client;
 
 import com.mahghuuuls.jass.api.client.ClientStaminaApi;
+import com.mahghuuuls.jass.ClientIntegrations;
 import com.mahghuuuls.jass.CommonProxy;
 import com.mahghuuuls.jass.network.JassNetwork;
 import net.minecraftforge.common.MinecraftForge;
@@ -15,7 +16,9 @@ public final class ClientProxy extends CommonProxy {
         JassNetwork.setClientSink(state);
         ClientStaminaApi.bind(ClientStaminaState::apiSnapshot);
         MinecraftForge.EVENT_BUS.register(state);
-        MinecraftForge.EVENT_BUS.register(new HudPresenter(feedback));
+        HudPresenter presenter = new HudPresenter(feedback);
+        MinecraftForge.EVENT_BUS.register(presenter);
+        ClientIntegrations.wire(presenter);
         MinecraftForge.EVENT_BUS.register(ClientActionGuard.install(feedback));
     }
 }

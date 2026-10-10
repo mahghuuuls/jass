@@ -65,3 +65,9 @@ segments_y_offset,0,pixels,any integer,client,REV-001,Positive moves up
 classicbar_integration,true,boolean,true/false,client,REV-001,Takes effect only when Classic Bar Legacy is installed
 classicbar_bar_color,#E3B834,#RRGGBB,hex color,client,REV-001,Invalid values fall back to the default with a warning
 classicbar_show_numbers,true,boolean,true/false,client,REV-001,
+bar_position,right_stack,mode,right_stack/left_stack/top_left/top_right/bottom_left/bottom_right,client,IMP-017,Stack values sit in the bar column above the hotbar and stack after Classic Bar's bars
+bar_width,81,pixels,10 to 400,client,IMP-017,Fill area width; 81 matches a vanilla bar column
+bar_height,5,pixels,1 to 20,client,IMP-017,Fill area height; taller bars take a taller row
+bar_x_offset,0,pixels,any integer,client,IMP-017,Positive moves right
+bar_y_offset,0,pixels,any integer,client,IMP-017,Positive moves up
+bar_fill_direction,left_to_right,mode,left_to_right/right_to_left,client,IMP-017,

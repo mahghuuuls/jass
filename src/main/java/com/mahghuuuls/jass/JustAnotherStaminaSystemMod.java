@@ -26,7 +26,7 @@ import org.apache.logging.log4j.Logger;
         name = Tags.MOD_NAME,
         version = Tags.VERSION,
         acceptedMinecraftVersions = "[1.12.2]",
-        dependencies = "required-after:mixinbooter@[11.8,);after:baubles@[1.5.2,);after:elenaidodge2@[1.1.0,)")
+        dependencies = "required-after:mixinbooter@[11.8,);after:baubles@[1.5.2,);after:elenaidodge2@[1.1.0,);after:classicbar@[0.6.0,)")
 public class JustAnotherStaminaSystemMod {
 
     public static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);

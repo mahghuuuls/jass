@@ -65,6 +65,12 @@ dependencies {
     // Inhibited, development runtime only for the gating cards; never packaged or declared
     // (JASS finds it by registry id). Copied out of the owner's TestPACK, which stays read-only:
     //   Inhibited-1.2.0.jar, sha256 f330fda62706a8237d9b5e86fc1e953e2ec3c4e752345a629a6ce75c7b0e45c7
+    // Classic Bar Legacy 0.6.0 (the verified minimum) for compiling the optional bar; the dev runtime
+    // loads a jar placed in libs/ only while a campaign needs it.
+    compileOnly rfg.deobf('curse.maven:classic-bar-legacy-1153317:8227355')
+    if (file('libs/classicbar-0.6.1.jar').exists()) {
+        runtimeOnly rfg.deobf(files('libs/classicbar-0.6.1.jar'))
+    }
     if (file('libs/Inhibited-1.2.0.jar').exists()) {
         runtimeOnly rfg.deobf(files('libs/Inhibited-1.2.0.jar'))
     }
