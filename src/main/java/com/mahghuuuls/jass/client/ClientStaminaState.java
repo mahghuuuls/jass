@@ -21,6 +21,7 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
     private static boolean jumpCostEnabled;
     private static boolean guardBroken;
     private static boolean gated;
+    private static boolean dodgeUsesStamina;
 
     private final FeedbackPlayer feedback;
 
@@ -42,6 +43,11 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
 
     public static boolean canSpend() {
         return canSpend;
+    }
+
+    /** True while Elenai Dodge 2's dodges cost Stamina instead of feathers. */
+    public static boolean dodgeUsesStamina() {
+        return dodgeUsesStamina;
     }
 
     /** True while Inhibited gating suspends costs for this player. */
@@ -77,6 +83,7 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
             jumpCostEnabled = message.jumpCostEnabled();
             guardBroken = message.guardBroken();
             gated = message.gated();
+            dodgeUsesStamina = message.dodgeUsesStamina();
             if (newDenial) {
                 feedback.onDenied();
             }
@@ -94,6 +101,7 @@ public final class ClientStaminaState implements JassNetwork.ClientSnapshotSink 
             jumpCostEnabled = false;
             guardBroken = false;
             gated = false;
+            dodgeUsesStamina = false;
         });
     }
 }

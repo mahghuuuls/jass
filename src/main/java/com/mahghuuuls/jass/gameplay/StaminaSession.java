@@ -29,6 +29,7 @@ final class StaminaSession {
     boolean lastSentJumpCostEnabled;
     boolean lastSentGuardBroken;
     boolean lastSentGated;
+    boolean lastSentDodgeStamina;
 
     StaminaSession(double initialStamina) {
         this.pool = new StaminaPool(initialStamina);

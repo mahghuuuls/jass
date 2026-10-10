@@ -25,6 +25,10 @@ public final class JassClientConfig {
     @Config.Comment("With Inhibited gating active: hide the Stamina display while the player does not have the Inhibited effect.")
     public static boolean hudHideOutsideInhibited = true;
 
+    @Config.Name("hide_elenai_feather_hud")
+    @Config.Comment("With Elenai Dodge 2: hide its feather bar while the server makes dodges cost Stamina instead of feathers.")
+    public static boolean hideElenaiFeatherHud = true;
+
     @Config.Name("denied_action_sound")
     @Config.Comment("Play a soft sound, at most once per second, when an action is refused for lack of Stamina.")
     public static boolean deniedActionSound = false;

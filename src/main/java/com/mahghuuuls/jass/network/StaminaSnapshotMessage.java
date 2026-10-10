@@ -15,12 +15,13 @@ public final class StaminaSnapshotMessage implements IMessage {
     private boolean jumpCostEnabled;
     private boolean guardBroken;
     private boolean gated;
+    private boolean dodgeUsesStamina;
 
     public StaminaSnapshotMessage() {
     }
 
     public StaminaSnapshotMessage(float visible, float maximum, boolean canSpend, int denialCount,
-            boolean jumpCostEnabled, boolean guardBroken, boolean gated) {
+            boolean jumpCostEnabled, boolean guardBroken, boolean gated, boolean dodgeUsesStamina) {
         this.visible = visible;
         this.maximum = maximum;
         this.canSpend = canSpend;
@@ -28,6 +29,7 @@ public final class StaminaSnapshotMessage implements IMessage {
         this.jumpCostEnabled = jumpCostEnabled;
         this.guardBroken = guardBroken;
         this.gated = gated;
+        this.dodgeUsesStamina = dodgeUsesStamina;
     }
 
     public float visible() {
@@ -62,6 +64,11 @@ public final class StaminaSnapshotMessage implements IMessage {
         return gated;
     }
 
+    /** True while Elenai Dodge 2's dodges cost Stamina instead of feathers. */
+    public boolean dodgeUsesStamina() {
+        return dodgeUsesStamina;
+    }
+
     @Override
     public void fromBytes(ByteBuf buf) {
         visible = buf.readFloat();
@@ -71,6 +78,7 @@ public final class StaminaSnapshotMessage implements IMessage {
         jumpCostEnabled = buf.readBoolean();
         guardBroken = buf.readBoolean();
         gated = buf.readBoolean();
+        dodgeUsesStamina = buf.readBoolean();
     }
 
     @Override
@@ -82,6 +90,7 @@ public final class StaminaSnapshotMessage implements IMessage {
         buf.writeBoolean(jumpCostEnabled);
         buf.writeBoolean(guardBroken);
         buf.writeBoolean(gated);
+        buf.writeBoolean(dodgeUsesStamina);
     }
 
     public static final class Handler implements IMessageHandler<StaminaSnapshotMessage, IMessage> {

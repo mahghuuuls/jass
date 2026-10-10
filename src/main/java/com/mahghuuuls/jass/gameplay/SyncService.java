@@ -5,6 +5,8 @@ import com.mahghuuuls.jass.network.JassNetwork;
 import com.mahghuuuls.jass.network.StaminaSnapshotMessage;
 import net.minecraft.entity.player.EntityPlayerMP;
 
+import java.util.function.BooleanSupplier;
+
 /**
  * Owns the client contract: one snapshot per player, sent when a value the client uses differs
  * from what was last sent, at most once every {@link #MIN_TICKS_BETWEEN_SENDS} ticks, and
@@ -19,10 +21,16 @@ final class SyncService {
 
     private final StaminaSessionManager sessions;
     private final ActionGate gate;
+    private volatile BooleanSupplier dodgeUsesStamina = () -> false;
 
     SyncService(StaminaSessionManager sessions, ActionGate gate) {
         this.sessions = sessions;
         this.gate = gate;
+    }
+
+    /** Wired when Elenai is present: whether its dodges cost Stamina, for the client's feather-bar choice. */
+    void reportDodgeUsesStamina(BooleanSupplier flag) {
+        this.dodgeUsesStamina = flag;
     }
 
     void maybeSend(EntityPlayerMP player, long worldTick) {
@@ -38,20 +46,22 @@ final class SyncService {
         boolean jumpCostEnabled = ConfigModel.server().jumpCostEnabled();
         boolean guardBroken = readout.guardBreakTicks() > 0;
         boolean gated = readout.gated();
+        boolean dodgeStamina = dodgeUsesStamina.getAsBoolean();
         boolean changed = visible != session.lastSentVisible
                 || maximum != session.lastSentMaximum
                 || canSpend != session.lastSentCanSpend
                 || denialCount != session.lastSentDenialCount
                 || jumpCostEnabled != session.lastSentJumpCostEnabled
                 || guardBroken != session.lastSentGuardBroken
-                || gated != session.lastSentGated;
+                || gated != session.lastSentGated
+                || dodgeStamina != session.lastSentDodgeStamina;
         boolean throttleOpen = worldTick - session.lastSyncTick >= MIN_TICKS_BETWEEN_SENDS
                 || canSpend != session.lastSentCanSpend;
         if (!session.syncForced && !(changed && throttleOpen)) {
             return;
         }
         JassNetwork.channel().sendTo(new StaminaSnapshotMessage(visible, maximum, canSpend, denialCount, jumpCostEnabled,
-                guardBroken, gated), player);
+                guardBroken, gated, dodgeStamina), player);
         session.syncForced = false;
         session.lastSyncTick = worldTick;
         session.lastSentVisible = visible;
@@ -61,5 +71,6 @@ final class SyncService {
         session.lastSentJumpCostEnabled = jumpCostEnabled;
         session.lastSentGuardBroken = guardBroken;
         session.lastSentGated = gated;
+        session.lastSentDodgeStamina = dodgeStamina;
     }
 }

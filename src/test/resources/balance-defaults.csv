@@ -54,6 +54,7 @@ rlcombat_integration,true,boolean,true/false,server,owner note 2026-10-05,Takes 
 creative_consumption,false,boolean,true/false,server,draft 10.28,
 hud_hide_when_full,true,boolean,true/false,client,draft 10.29,
 hud_hide_outside_inhibited,true,boolean,true/false,client,draft 10.30,Applies only while Inhibited gating is active
+hide_elenai_feather_hud,true,boolean,true/false,client,owner request 2026-10-09,Takes effect only when Elenai Dodge 2 is installed and its dodges cost Stamina (REV-008)
 hud_numeric_text,hidden,mode,hidden/current/maximum/current_and_maximum,client,draft 10.31 and decision D2,
 denied_action_sound,false,boolean,true/false,client,decision D6 and REV-003,At most once per second; off by default (owner 2026-10-06)
 command_permission_level,2,permission level,0 to 4,server,decision D7,

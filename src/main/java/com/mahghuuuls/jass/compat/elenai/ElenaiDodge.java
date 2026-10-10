@@ -1,9 +1,12 @@
 package com.mahghuuuls.jass.compat.elenai;
 
-import com.elenai.elenaidodge2.api.CheckFeatherEvent;
 import com.elenai.elenaidodge2.api.DodgeEvent;
 import com.elenai.elenaidodge2.api.FeathersHelper;
 import com.elenai.elenaidodge2.api.SpendFeatherEvent;
+import com.elenai.elenaidodge2.capability.dodges.DodgesProvider;
+import com.elenai.elenaidodge2.capability.dodges.IDodges;
+import com.elenai.elenaidodge2.network.PacketHandler;
+import com.elenai.elenaidodge2.network.message.CUpdateDodgeMessage;
 import com.mahghuuuls.jass.api.JassActions;
 import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.gameplay.ActionGate;
@@ -20,12 +23,21 @@ import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 /**
- * Elenai dodges cost Stamina instead of feathers (REQ-070). All three Elenai events are posted on
- * the server inside one dodge request: {@code ServerDodgeEvent} (Elenai's own gates run at normal
- * priority; JASS decides at LOWEST, after them), {@code CheckFeatherEvent} (cancelled so feathers
- * never block a dodge), and {@code SpendFeatherEvent} (cancelled for a dodge JASS allowed, which is
- * then paid once). Never touches the client-only {@code RequestDodgeEvent}. With the integration
- * off, nothing is changed and Elenai uses feathers.
+ * Elenai dodges cost Stamina instead of feathers (REQ-070). Both Elenai events JASS uses are posted
+ * on the server inside one dodge request: {@code ServerDodgeEvent} (Elenai's own gates, including its
+ * feather and weight checks, run at normal priority; JASS decides at LOWEST, after them) and
+ * {@code SpendFeatherEvent} (cancelled for a dodge JASS allowed, which is then paid once). Feathers
+ * are never spent, so Elenai's feather check always passes; its weight limit still applies, as one of
+ * Elenai's own conditions.
+ *
+ * <p>Feathers are topped up to full at HIGHEST priority before Elenai's own checks: Elenai does not
+ * copy the feather count when a player is recreated (death, leaving the End), so without the top-up
+ * its feather and weight checks would refuse dodges for a while after every respawn.
+ *
+ * <p>JASS must not listen to {@code CheckFeatherEvent}: Elenai 1.1.0 posts the same event object
+ * twice, and Forge throws on the second post of an event that has any listener, which breaks every
+ * dodge. Never touches the client-only {@code RequestDodgeEvent}. With the integration off, nothing
+ * is changed and Elenai uses feathers.
  */
 public final class ElenaiDodge {
 
@@ -44,7 +56,11 @@ public final class ElenaiDodge {
         this.logger = logger;
     }
 
-    private boolean active() {
+    /** Elenai's full feather count (20 half feathers), as its own helpers cap it. */
+    private static final int FULL_FEATHERS = 20;
+
+    /** True while dodges cost Stamina: the option is on and the integration has not failed. */
+    public boolean active() {
         return !failed && enabled.getAsBoolean();
     }
 
@@ -56,11 +72,21 @@ public final class ElenaiDodge {
         }
     }
 
-    @SubscribeEvent
-    public void onCheckFeathers(CheckFeatherEvent event) {
+    /**
+     * Before Elenai's own checks: feathers are never spent while dodges cost Stamina, so keep them full
+     * (Elenai resets them to 0 on respawn). The client is told, as Elenai's own helpers do.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onDodgeRequested(DodgeEvent.ServerDodgeEvent event) {
         try {
-            if (active() && !event.getPlayer().world.isRemote) {
-                event.setCanceled(true);
+            EntityPlayer player = event.getPlayer();
+            if (!active() || player.world.isRemote || !(player instanceof EntityPlayerMP)) {
+                return;
+            }
+            IDodges feathers = player.getCapability(DodgesProvider.DODGES_CAP, null);
+            if (feathers != null && feathers.getDodges() < FULL_FEATHERS) {
+                feathers.set(FULL_FEATHERS);
+                PacketHandler.instance.sendTo(new CUpdateDodgeMessage(FULL_FEATHERS), (EntityPlayerMP) player);
             }
         } catch (LinkageError | RuntimeException e) {
             disable(e);

@@ -9,6 +9,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
+import java.util.function.BooleanSupplier;
+
 /**
  * Wires the server-side Stamina components together and connects them to the player lifecycle
  * and server tick. One instance exists per game session.
@@ -50,6 +52,11 @@ public final class JassGameplay {
     /** Closes addon provider registration; called when loading completes. */
     public void freezeApiRegistration() {
         api.freezeRegistration();
+    }
+
+    /** Wired when Elenai is present: whether its dodges cost Stamina (sent to clients, REQ-072). */
+    public void reportDodgeUsesStamina(BooleanSupplier flag) {
+        sync.reportDodgeUsesStamina(flag);
     }
 
     /** Wires an integration's weight source (Elenai). */

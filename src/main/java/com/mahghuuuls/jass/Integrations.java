@@ -51,9 +51,12 @@ final class Integrations {
         // Elenai Dodge 2 classes are loaded only when it is present.
         if (Loader.isModLoaded("elenaidodge2")) {
             try {
-                MinecraftForge.EVENT_BUS.register(new ElenaiDodge(gameplay.gate(),
+                ElenaiDodge dodge = new ElenaiDodge(gameplay.gate(),
                         () -> ConfigModel.server().elenaiDodgeResourceIntegration(),
-                        () -> ConfigModel.server().elenaiDodgeBaseCost(), LOGGER));
+                        () -> ConfigModel.server().elenaiDodgeBaseCost(), LOGGER);
+                MinecraftForge.EVENT_BUS.register(dodge);
+                // The client hides Elenai's feather bar only while dodges really cost Stamina (REQ-072).
+                gameplay.reportDodgeUsesStamina(dodge::active);
                 gameplay.useWeightSource(new ElenaiWeight(() -> ConfigModel.server().elenaiWeightSourceIntegration(),
                         () -> ConfigModel.server().elenaiWeightConversion(), LOGGER));
                 LOGGER.info("Elenai Dodge 2 found: dodges cost Stamina and weight follows Elenai while their options are true");
