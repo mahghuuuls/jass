@@ -54,6 +54,13 @@ public final class ItemValueLookup {
                 ItemValueKind.ARMOR_WEIGHT, stack, Double.NaN);
     }
 
+    /** Configured or provided weight while held in a hand, else 0 (REV-014). */
+    public static double heldWeight(ItemStack stack) {
+        ServerSettings s = ConfigModel.server();
+        return pick(s.configuredHeldWeight(ItemKeys.registryName(stack), ItemKeys.metadata(stack)),
+                ItemValueKind.HELD_WEIGHT, stack, 0.0);
+    }
+
     /** Configuration, then providers, then the default. */
     static double pick(double configured, ItemValueKind kind, ItemStack stack, double fallback) {
         // Providers are asked only when the configuration has no entry.

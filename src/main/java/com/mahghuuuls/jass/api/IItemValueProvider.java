@@ -45,4 +45,9 @@ public interface IItemValueProvider {
     default double armorWeight(ItemStack stack) {
         return Double.NaN;
     }
+
+    /** Weight of this item while held in the main hand or the off hand (used with every weight source). */
+    default double heldWeight(ItemStack stack) {
+        return Double.NaN;
+    }
 }

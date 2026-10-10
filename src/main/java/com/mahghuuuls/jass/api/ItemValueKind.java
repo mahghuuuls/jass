@@ -9,7 +9,8 @@ public enum ItemValueKind {
     SHIELD_STABILITY(Double.POSITIVE_INFINITY),
     SHIELD_MELEE_BLOCK(1.0),
     SHIELD_PROJECTILE_BLOCK(1.0),
-    ARMOR_WEIGHT(Double.POSITIVE_INFINITY);
+    ARMOR_WEIGHT(Double.POSITIVE_INFINITY),
+    HELD_WEIGHT(Double.POSITIVE_INFINITY);
 
     private final double maximum;
 
@@ -34,8 +35,12 @@ public enum ItemValueKind {
                 return provider.shieldMeleeBlock(stack);
             case SHIELD_PROJECTILE_BLOCK:
                 return provider.shieldProjectileBlock(stack);
-            default:
+            case ARMOR_WEIGHT:
                 return provider.armorWeight(stack);
+            case HELD_WEIGHT:
+                return provider.heldWeight(stack);
+            default:
+                return Double.NaN;
         }
     }
 }

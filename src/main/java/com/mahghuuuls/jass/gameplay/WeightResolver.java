@@ -12,11 +12,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.ISpecialArmor;
 
 import java.util.function.DoubleSupplier;
+import java.util.function.ToDoubleFunction;
 
 /**
- * The only owner of weight-source policy (REQ-012, REQ-071): asks the preferred source and falls
- * back to the standalone calculation when it declines. Also the standalone source itself: the sum
- * of the four worn armor items' weights. Held items, shields, and Baubles never add weight.
+ * The only owner of weight-source policy (REQ-012, REQ-071): asks the preferred source for the armor
+ * weight and falls back to the standalone calculation when it declines, then adds the weight of the
+ * items in both hands (REV-014) whatever the source. Also the standalone source itself: the sum of
+ * the four worn armor items' weights. Baubles and the rest of the inventory never add weight.
  */
 final class WeightResolver implements WeightSource {
 
@@ -33,12 +35,28 @@ final class WeightResolver implements WeightSource {
         this.preferred = source;
     }
 
-    /** The player's Effective Weight and the id of the source that gave it. */
+    /** The player's Effective Weight (armor plus held items), the armor source id, and the held part. */
     Resolved resolve(EntityPlayer player) {
-        if (preferred == this) {
-            return new Resolved(effectiveWeight(player), STANDALONE);
+        Resolved armor = preferred == this
+                ? new Resolved(effectiveWeight(player), STANDALONE)
+                : choose(preferred.effectiveWeight(player), preferred.id(), () -> effectiveWeight(player));
+        return armor.withHeld(heldWeight(player));
+    }
+
+    private static double heldWeight(EntityPlayer player) {
+        return heldWeight(player.getHeldItemMainhand(), player.getHeldItemOffhand(), ItemValueLookup::heldWeight);
+    }
+
+    /** Sum of the held weights of the two hand items; empty hands add 0 and the stack size does not matter. */
+    static double heldWeight(ItemStack main, ItemStack off, ToDoubleFunction<ItemStack> lookup) {
+        double total = 0.0;
+        for (ItemStack stack : new ItemStack[]{main, off}) {
+            if (!stack.isEmpty()) {
+                double weight = lookup.applyAsDouble(stack);
+                total += Double.isNaN(weight) ? 0.0 : Math.max(0.0, weight);
+            }
         }
-        return choose(preferred.effectiveWeight(player), preferred.id(), () -> effectiveWeight(player));
+        return total;
     }
 
     /** The preferred source's weight when it is usable (a number, not negative), else the standalone weight. */
@@ -89,12 +107,24 @@ final class WeightResolver implements WeightSource {
     }
 
     static final class Resolved {
+        /** Effective Weight: armor weight plus {@link #held}. */
         final double weight;
+        /** The armor weight source id. */
         final String source;
+        final double held;
 
         Resolved(double weight, String source) {
+            this(weight, source, 0.0);
+        }
+
+        private Resolved(double weight, String source, double held) {
             this.weight = weight;
             this.source = source;
+            this.held = held;
+        }
+
+        Resolved withHeld(double heldWeight) {
+            return new Resolved(weight + heldWeight, source, held + heldWeight);
         }
     }
 }

@@ -86,6 +86,7 @@ final class ItemValuesPublisher {
                 .set(Lines.SHIELD_MELEE_BLOCK, s.shieldMeleeBlockLines())
                 .set(Lines.SHIELD_PROJECTILE_BLOCK, s.shieldProjectileBlockLines())
                 .set(Lines.ARMOR_WEIGHT, s.armorWeightLines())
+                .set(Lines.HELD_WEIGHT, s.heldWeightLines())
                 .set(Lines.ITEM_STAMINA_MODIFIERS, s.itemModifierLines())
                 .set(Lines.ELENAI_WEIGHT_OVERRIDES, previewLines(previewActive))
                 .elenaiWeightSource(previewActive);

@@ -72,7 +72,7 @@ public final class JassConfig {
     @Config.Comment({
             "Weight of worn armor items, one entry per line: namespace:item[@metadata or @*]=weight",
             "Worn armor without an entry weighs its armor points x fallback_weight_per_armor_point.",
-            "Held items, shields, and Baubles never add weight. Metadata is ignored for items with durability."})
+            "Held items use held_weight; Baubles never add weight. Metadata is ignored for items with durability."})
     public static String[] armorWeight = {
             "minecraft:leather_helmet=1",
             "minecraft:leather_chestplate=2",
@@ -94,6 +94,25 @@ public final class JassConfig {
             "minecraft:diamond_chestplate=8",
             "minecraft:diamond_leggings=7",
             "minecraft:diamond_boots=4"
+    };
+
+    @Config.Name("held_weight")
+    @Config.Comment({
+            "Weight of items held in the main hand or the off hand, one entry per line: namespace:item[@metadata or @*]=weight",
+            "Held weight adds to Effective Weight, so it raises sprint, jump, and Elenai dodge costs only. Items without an entry weigh 0.",
+            "The stack size does not matter. Metadata is ignored for items with durability."})
+    public static String[] heldWeight = {
+            "minecraft:shield=4",
+            "minecraft:wooden_sword=2",
+            "minecraft:stone_sword=2",
+            "minecraft:iron_sword=2",
+            "minecraft:golden_sword=2",
+            "minecraft:diamond_sword=2",
+            "minecraft:wooden_axe=3",
+            "minecraft:stone_axe=3",
+            "minecraft:iron_axe=3",
+            "minecraft:golden_axe=3",
+            "minecraft:diamond_axe=3"
     };
 
     @Config.Name("fallback_weight_per_armor_point")

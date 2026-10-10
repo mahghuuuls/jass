@@ -124,7 +124,7 @@ public final class JassClientConfig {
 
     @Config.Name("item_tooltips")
     @Config.Comment({"Stamina section in item tooltips: swing cost, bow drain, shield Stability and block shares,",
-            "armor weight, and configured item Stamina modifiers, with the server's values.",
+            "armor and held weight, and configured item Stamina modifiers, with the server's values.",
             "always, shift (only while Shift is held), or off."})
     public static ItemTooltips itemTooltips = ItemTooltips.ALWAYS;
 }

@@ -15,7 +15,7 @@ import java.util.List;
  * Baubles API slots as active slots (REQ-042), for Baubles and Bubbles. Uses only
  * {@code BaublesApi.getBaublesHandler}, {@code getSlots}, and {@code getStackInSlot} (DEPREF-004).
  * Loaded only when a {@code baubles} mod is present. A failure logs one warning and turns this
- * source off (ERR-1). Baubles never add weight: weight reads only armor slots.
+ * source off (ERR-1). Baubles never add weight: weight reads only armor and hand slots.
  */
 public final class BaublesSlots implements ExtraSlotSource {
 

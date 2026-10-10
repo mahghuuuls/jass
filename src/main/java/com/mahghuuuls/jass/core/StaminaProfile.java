@@ -12,6 +12,7 @@ public final class StaminaProfile {
     private final double efficiency;
     private final double effectiveWeight;
     private final String weightSource;
+    private final double heldWeight;
     private final List<String> contributions;
 
     public StaminaProfile(double maximum, double regeneration, double regenerationDelay, double efficiency,
@@ -22,6 +23,12 @@ public final class StaminaProfile {
 
     public StaminaProfile(double maximum, double regeneration, double regenerationDelay, double efficiency,
             double effectiveWeight, String weightSource, List<String> contributions) {
+        this(maximum, regeneration, regenerationDelay, efficiency, effectiveWeight, weightSource, 0.0, contributions);
+    }
+
+    public StaminaProfile(double maximum, double regeneration, double regenerationDelay, double efficiency,
+            double effectiveWeight, String weightSource, double heldWeight, List<String> contributions) {
+        this.heldWeight = heldWeight;
         this.contributions = Collections.unmodifiableList(contributions);
         this.maximum = maximum;
         this.regeneration = regeneration;
@@ -47,9 +54,14 @@ public final class StaminaProfile {
         return efficiency;
     }
 
-    /** Weight of worn armor; multiplies Movement Action costs. */
+    /** Weight of worn armor plus held items; multiplies Movement Action costs. */
     public double effectiveWeight() {
         return effectiveWeight;
+    }
+
+    /** The part of {@link #effectiveWeight()} that comes from the items in both hands. */
+    public double heldWeight() {
+        return heldWeight;
     }
 
     /** One line per contributing item rule or provider, for {@code /stamina inspect}. */
@@ -57,7 +69,7 @@ public final class StaminaProfile {
         return contributions;
     }
 
-    /** Where the weight came from, such as {@code standalone}. */
+    /** Where the armor weight came from, such as {@code standalone}. */
     public String weightSource() {
         return weightSource;
     }

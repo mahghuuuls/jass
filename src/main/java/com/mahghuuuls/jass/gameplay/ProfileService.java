@@ -15,6 +15,7 @@ import com.mahghuuuls.jass.core.ProfileAggregator;
 import com.mahghuuuls.jass.core.StaminaProfile;
 import com.mahghuuuls.jass.core.StatField;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,8 +29,8 @@ import java.util.WeakHashMap;
 /**
  * Resolves a player's Stamina Profile. Every stat read goes through here, so equipment and
  * addon modifiers can be added later without touching callers. A profile is cached per player
- * entity and rebuilt only after an equipment change or a configuration reload, so per-tick
- * readers (sprint, bow) never rescan equipment (ARC-007).
+ * entity and rebuilt only after an equipment change, a hand item change, or a configuration reload,
+ * so per-tick readers (sprint, bow) never rescan equipment (ARC-007).
  */
 public final class ProfileService {
 
@@ -51,8 +52,13 @@ public final class ProfileService {
     StaminaProfile profile(EntityPlayer player) {
         ServerSettings settings = ConfigModel.server();
         Cached cached = cache.get(player);
-        if (cached == null || cached.revision != settings.revision()) {
-            cached = new Cached(build(player, settings), settings.revision(), slots.extraFingerprint(player));
+        ItemStack main = player.getHeldItemMainhand();
+        ItemStack off = player.getHeldItemOffhand();
+        // Same stack objects as at build time: a hotbar switch or hand swap replaces them. Jumps and
+        // dodges run before the player's update posts the equipment event, so held weight (REV-014)
+        // must not wait for it.
+        if (cached == null || cached.revision != settings.revision() || cached.main != main || cached.off != off) {
+            cached = new Cached(build(player, settings), settings.revision(), slots.extraFingerprint(player), main, off);
             cache.put(player, cached);
         }
         return cached.profile;
@@ -97,7 +103,7 @@ public final class ProfileService {
         }
         WeightResolver.Resolved weight = weights.resolve(player);
         return new StaminaProfile(stats.maximum, stats.regeneration, stats.regenerationDelay, stats.efficiency,
-                weight.weight, weight.source, explanations);
+                weight.weight, weight.source, weight.held, explanations);
     }
 
     /** Item rules and item providers for every stack in an active slot, then contextual providers. */
@@ -178,11 +184,15 @@ public final class ProfileService {
         final StaminaProfile profile;
         final int revision;
         final int extraFingerprint;
+        final ItemStack main;
+        final ItemStack off;
 
-        Cached(StaminaProfile profile, int revision, int extraFingerprint) {
+        Cached(StaminaProfile profile, int revision, int extraFingerprint, ItemStack main, ItemStack off) {
             this.profile = profile;
             this.revision = revision;
             this.extraFingerprint = extraFingerprint;
+            this.main = main;
+            this.off = off;
         }
     }
 }

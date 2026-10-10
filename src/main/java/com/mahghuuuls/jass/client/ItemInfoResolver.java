@@ -24,8 +24,8 @@ import net.minecraftforge.common.ISpecialArmor;
  * item tests the server uses, and the server's order for each value (configuration, then addon
  * providers, then the default; REQ-086): melee weapons have an attack damage attribute in the main
  * hand (or a configured or provided melee cost, since every swing is charged), bow-draw items are drawn like a bow right now (the
- * server drains only those), blocking items use the block action or are shields, and armor is worn in
- * an armor slot.
+ * server drains only those), blocking items use the block action or are shields, armor is worn in
+ * an armor slot, and any item can have a held weight (REV-014).
  */
 final class ItemInfoResolver {
 
@@ -62,6 +62,10 @@ final class ItemInfoResolver {
                     t.blockStaminaPerDamage() * CostCalculator.stabilityFactor(t.stabilityScale(), stability));
         }
         weight(stack, player, t, name, metadata, b);
+        double held = pick(t.configuredHeldWeight(name, metadata), ItemValueKind.HELD_WEIGHT, stack, 0.0);
+        if (held > 0.0) {
+            b.heldWeight(held);
+        }
         ModifierSet rule = t.modifiers(name, metadata);
         if (rule != null) {
             for (StatField field : StatField.values()) {

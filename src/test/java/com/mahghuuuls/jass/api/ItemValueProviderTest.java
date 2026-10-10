@@ -48,6 +48,19 @@ class ItemValueProviderTest {
     }
 
     @Test
+    void heldAndArmorWeightAreSeparateAnswers() {
+        List<RegisteredProvider<IItemValueProvider>> providers = Arrays.asList(
+                provider("held", new IItemValueProvider() {
+                    @Override
+                    public double heldWeight(net.minecraft.item.ItemStack stack) {
+                        return 5.0;
+                    }
+                }));
+        assertEquals(5.0, JassApi.firstUsable(providers, ItemValueKind.HELD_WEIGHT, null));
+        assertTrue(Double.isNaN(JassApi.firstUsable(providers, ItemValueKind.ARMOR_WEIGHT, null)));
+    }
+
+    @Test
     void blockSharesMustBeFractions() {
         List<RegisteredProvider<IItemValueProvider>> providers = Arrays.asList(
                 provider("too-much", new IItemValueProvider() {

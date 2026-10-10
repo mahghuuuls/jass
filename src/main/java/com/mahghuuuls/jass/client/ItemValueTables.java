@@ -31,6 +31,7 @@ final class ItemValueTables {
     private final double defaultProjectileBlock;
     private final ItemValueRules projectileBlock;
     private final ItemValueRules armorWeights;
+    private final ItemValueRules heldWeights;
     private final double fallbackWeightPerArmorPoint;
     private final ItemModifierRules modifiers;
     private final boolean elenaiWeightSource;
@@ -51,6 +52,7 @@ final class ItemValueTables {
         defaultProjectileBlock = m.get(Number.DEFAULT_SHIELD_PROJECTILE_BLOCK);
         projectileBlock = ItemValueRules.parse("shield_projectile_block", m.get(Lines.SHIELD_PROJECTILE_BLOCK), 0.0, 1.0);
         armorWeights = ItemValueRules.parse("armor_weight", m.get(Lines.ARMOR_WEIGHT), 0.0);
+        heldWeights = ItemValueRules.parse("held_weight", m.get(Lines.HELD_WEIGHT), 0.0);
         fallbackWeightPerArmorPoint = m.get(Number.FALLBACK_WEIGHT_PER_ARMOR_POINT);
         modifiers = ItemModifierRules.parse("item_stamina_modifiers", m.get(Lines.ITEM_STAMINA_MODIFIERS));
         elenaiWeightSource = m.elenaiWeightSource();
@@ -134,6 +136,11 @@ final class ItemValueTables {
     /** Configured standalone weight, or {@code NaN} when the item has no entry. */
     double armorWeight(String name, int metadata) {
         return armorWeights.valueFor(name, metadata, Double.NaN);
+    }
+
+    /** Configured held weight, or {@code NaN} when the item has no entry. */
+    double configuredHeldWeight(String name, int metadata) {
+        return heldWeights.valueFor(name, metadata, Double.NaN);
     }
 
     double fallbackWeightPerArmorPoint() {

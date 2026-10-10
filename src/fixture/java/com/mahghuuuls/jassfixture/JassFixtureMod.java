@@ -86,6 +86,12 @@ public final class JassFixtureMod {
                 return stack.getItem() == Items.CHAINMAIL_CHESTPLATE ? 9.0
                         : stack.getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) ? 3.0 : Double.NaN;
             }
+
+            // Golden hoe has no held_weight entry, so 5 applies; the shield's configured 4 wins over 9.
+            @Override
+            public double heldWeight(ItemStack stack) {
+                return stack.getItem() == Items.GOLDEN_HOE ? 5.0 : stack.getItem() == Items.SHIELD ? 9.0 : Double.NaN;
+            }
         });
         MinecraftForge.EVENT_BUS.register(this);
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {

@@ -22,6 +22,7 @@ public final class ServerSettings {
     private final double jumpCost;
     private final double weightFactor;
     private final ItemValueRules armorWeights;
+    private final ItemValueRules heldWeights;
     private final double fallbackWeightPerArmorPoint;
     private final double defaultMeleeCost;
     private final ItemValueRules meleeCosts;
@@ -46,6 +47,7 @@ public final class ServerSettings {
     private final double elenaiWeightConversion;
     private final boolean debugLogging;
     private final String[] armorWeightLines;
+    private final String[] heldWeightLines;
     private final String[] meleeCostLines;
     private final String[] bowDrawCostLines;
     private final String[] shieldStabilityLines;
@@ -68,6 +70,7 @@ public final class ServerSettings {
         this.jumpCost = JassConfig.jumpCost;
         this.weightFactor = JassConfig.weightFactor;
         this.armorWeights = ItemValueRules.parse("armor_weight", JassConfig.armorWeight, 0.0);
+        this.heldWeights = ItemValueRules.parse("held_weight", JassConfig.heldWeight, 0.0);
         this.fallbackWeightPerArmorPoint = JassConfig.fallbackWeightPerArmorPoint;
         this.defaultMeleeCost = JassConfig.defaultMeleeCost;
         this.meleeCosts = ItemValueRules.parse("melee_cost_overrides", JassConfig.meleeCostOverrides, 0.0);
@@ -99,6 +102,7 @@ public final class ServerSettings {
         this.elenaiWeightConversion = JassConfig.elenaiWeightConversion;
         this.debugLogging = JassConfig.debugLogging;
         this.armorWeightLines = JassConfig.armorWeight.clone();
+        this.heldWeightLines = JassConfig.heldWeight.clone();
         this.meleeCostLines = JassConfig.meleeCostOverrides.clone();
         this.bowDrawCostLines = JassConfig.bowDrawCostOverrides.clone();
         this.shieldStabilityLines = JassConfig.shieldStability.clone();
@@ -231,7 +235,7 @@ public final class ServerSettings {
 
     /** Every parsed per-item list, for warnings and unknown-item checks. */
     public ItemList[] itemLists() {
-        return new ItemList[]{itemModifiers, meleeCosts, bowDrawCosts, armorWeights, shieldStability, shieldMeleeBlock,
+        return new ItemList[]{itemModifiers, meleeCosts, bowDrawCosts, armorWeights, heldWeights, shieldStability, shieldMeleeBlock,
                 shieldProjectileBlock};
     }
 
@@ -260,6 +264,10 @@ public final class ServerSettings {
 
     public String[] armorWeightLines() {
         return armorWeightLines.clone();
+    }
+
+    public String[] heldWeightLines() {
+        return heldWeightLines.clone();
     }
 
     public String[] meleeCostLines() {
@@ -291,6 +299,10 @@ public final class ServerSettings {
 
     public double configuredMeleeCost(String registryName, int metadata) {
         return meleeCosts.valueFor(registryName, metadata, Double.NaN);
+    }
+
+    public double configuredHeldWeight(String registryName, int metadata) {
+        return heldWeights.valueFor(registryName, metadata, Double.NaN);
     }
 
     public double configuredBowDrawCost(String registryName, int metadata) {

@@ -34,6 +34,7 @@ public final class ItemValuesMessage implements IMessage {
         SHIELD_MELEE_BLOCK,
         SHIELD_PROJECTILE_BLOCK,
         ARMOR_WEIGHT,
+        HELD_WEIGHT,
         ITEM_STAMINA_MODIFIERS,
         ELENAI_WEIGHT_OVERRIDES
     }

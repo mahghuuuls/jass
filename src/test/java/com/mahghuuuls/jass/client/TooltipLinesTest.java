@@ -50,6 +50,15 @@ class TooltipLinesTest {
     }
 
     @Test
+    void heldWeightUsesTheWeightLineAndArmorWeightWins() {
+        assertEquals(Arrays.asList(GRAY + "tooltip.jass.swing[12]", GRAY + "tooltip.jass.weight[2]"),
+                TooltipLines.lines(new ItemStaminaInfo.Builder().swingCost(12).heldWeight(2).build(), T));
+        assertEquals(Arrays.asList(GRAY + "tooltip.jass.weight[6]"),
+                TooltipLines.lines(new ItemStaminaInfo.Builder().weight(6, false).heldWeight(2).build(), T));
+        assertFalse(new ItemStaminaInfo.Builder().heldWeight(4).build().isEmpty());
+    }
+
+    @Test
     void modifierLinesUseJawmsColors() {
         ItemStaminaInfo info = new ItemStaminaInfo.Builder()
                 .modifier("flat_maximum", 20, ItemInfoResolver.beneficial(StatField.FLAT_MAXIMUM, 20))
@@ -106,6 +115,7 @@ class TooltipLinesTest {
                 .set(Number.ELENAI_WEIGHT_CONVERSION, 1.4)
                 .set(Lines.MELEE_COST_OVERRIDES, new String[] {"minecraft:iron_sword=15", "spartanweaponry:dagger_iron=4"})
                 .set(Lines.ITEM_STAMINA_MODIFIERS, new String[] {"minecraft:golden_chestplate=flat_maximum:20"})
+                .set(Lines.HELD_WEIGHT, new String[] {"minecraft:shield=4"})
                 .elenaiWeightSource(true);
         ByteBuf buf = Unpooled.buffer();
         out.toBytes(buf);
@@ -115,6 +125,7 @@ class TooltipLinesTest {
         assertEquals(1.4, in.get(Number.ELENAI_WEIGHT_CONVERSION));
         assertArrayEquals(out.get(Lines.MELEE_COST_OVERRIDES), in.get(Lines.MELEE_COST_OVERRIDES));
         assertArrayEquals(out.get(Lines.ITEM_STAMINA_MODIFIERS), in.get(Lines.ITEM_STAMINA_MODIFIERS));
+        assertArrayEquals(out.get(Lines.HELD_WEIGHT), in.get(Lines.HELD_WEIGHT));
         assertEquals(0, in.get(Lines.ARMOR_WEIGHT).length);
         assertTrue(in.elenaiWeightSource());
     }
@@ -125,13 +136,16 @@ class TooltipLinesTest {
                 .set(Number.DEFAULT_MELEE_COST, 20)
                 .set(Lines.MELEE_COST_OVERRIDES, new String[] {"minecraft:iron_sword=15"})
                 .set(Number.DEFAULT_SHIELD_STABILITY, 0)
-                .set(Lines.SHIELD_STABILITY, new String[] {"minecraft:shield=50"}));
+                .set(Lines.SHIELD_STABILITY, new String[] {"minecraft:shield=50"})
+                .set(Lines.HELD_WEIGHT, new String[] {"minecraft:shield=4"}));
         assertEquals(15.0, t.configuredMeleeCost("minecraft:iron_sword", -1));
         assertTrue(Double.isNaN(t.configuredMeleeCost("minecraft:stick", 0)));
         assertEquals(20.0, t.defaultMeleeCost());
         assertEquals(50.0, t.configuredStability("minecraft:shield", -1));
         assertTrue(Double.isNaN(t.configuredStability("minecraft:wooden_sword", -1)));
         assertTrue(Double.isNaN(t.armorWeight("minecraft:iron_chestplate", -1)));
+        assertEquals(4.0, t.configuredHeldWeight("minecraft:shield", -1));
+        assertTrue(Double.isNaN(t.configuredHeldWeight("minecraft:bow", -1)));
     }
 
     @Test

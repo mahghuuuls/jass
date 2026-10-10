@@ -49,6 +49,7 @@ public final class ItemStaminaInfo {
     private final double blockCostPerDamage;
     private final double weight;
     private final boolean weightApproximate;
+    private final double heldWeight;
     private final List<Modifier> modifiers;
 
     private ItemStaminaInfo(Builder b) {
@@ -60,6 +61,7 @@ public final class ItemStaminaInfo {
         this.blockCostPerDamage = b.blockCostPerDamage;
         this.weight = b.weight;
         this.weightApproximate = b.weightApproximate;
+        this.heldWeight = b.heldWeight;
         this.modifiers = Collections.unmodifiableList(new ArrayList<>(b.modifiers));
     }
 
@@ -108,13 +110,18 @@ public final class ItemStaminaInfo {
         return weightApproximate;
     }
 
+    /** Weight while held in the main hand or the off hand, or {@code NaN} when the item adds none. */
+    public double getHeldWeight() {
+        return heldWeight;
+    }
+
     public List<Modifier> getModifiers() {
         return modifiers;
     }
 
     public boolean isEmpty() {
         return Double.isNaN(swingCost) && Double.isNaN(drawPerSecond) && !isBlocking() && Double.isNaN(weight)
-                && modifiers.isEmpty();
+                && Double.isNaN(heldWeight) && modifiers.isEmpty();
     }
 
     public static final class Builder {
@@ -126,6 +133,7 @@ public final class ItemStaminaInfo {
         private double blockCostPerDamage = Double.NaN;
         private double weight = Double.NaN;
         private boolean weightApproximate;
+        private double heldWeight = Double.NaN;
         private final List<Modifier> modifiers = new ArrayList<>();
 
         public Builder swingCost(double value) {
@@ -149,6 +157,11 @@ public final class ItemStaminaInfo {
         public Builder weight(double value, boolean approximate) {
             weight = value;
             weightApproximate = approximate;
+            return this;
+        }
+
+        public Builder heldWeight(double value) {
+            heldWeight = value;
             return this;
         }
 

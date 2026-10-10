@@ -43,6 +43,9 @@ final class TooltipLines {
         if (!Double.isNaN(info.getWeight())) {
             // Elenai's piece weights are estimates (it rounds the whole set); shown as plain numbers (owner choice).
             lines.add(TextFormatting.GRAY + t.format("tooltip.jass.weight", number(info.getWeight())));
+        } else if (!Double.isNaN(info.getHeldWeight())) {
+            // Held weight shares the line; armor shows its worn weight instead (REV-014).
+            lines.add(TextFormatting.GRAY + t.format("tooltip.jass.weight", number(info.getHeldWeight())));
         }
         for (ItemStaminaInfo.Modifier modifier : info.getModifiers()) {
             lines.add((modifier.isBeneficial() ? TextFormatting.BLUE : TextFormatting.RED) + modifierText(modifier, t));
