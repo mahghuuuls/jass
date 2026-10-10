@@ -14,6 +14,11 @@ public final class JassNetwork {
         void onSnapshot(StaminaSnapshotMessage message);
     }
 
+    /** Receives the server's per-item values for tooltips on the client (REV-010). Never set on a dedicated server. */
+    public interface ClientItemValuesSink {
+        void onItemValues(ItemValuesMessage message);
+    }
+
     /** Receives client input facts, which it must validate, on the server. Installed by the gameplay layer. */
     public interface ServerInputSink {
         void onAirSwing(EntityPlayerMP player);
@@ -30,6 +35,7 @@ public final class JassNetwork {
     private static volatile ClientSnapshotSink clientSink;
     private static volatile ServerInputSink serverSink;
     private static volatile ServerJumpSink jumpSink;
+    private static volatile ClientItemValuesSink itemValuesSink;
 
     private JassNetwork() {
     }
@@ -40,6 +46,7 @@ public final class JassNetwork {
         channel.registerMessage(AirSwingMessage.Handler.class, AirSwingMessage.class, 1, Side.SERVER);
         channel.registerMessage(RefusedAttackMessage.Handler.class, RefusedAttackMessage.class, 2, Side.SERVER);
         channel.registerMessage(JumpMessage.Handler.class, JumpMessage.class, 3, Side.SERVER);
+        channel.registerMessage(ItemValuesMessage.Handler.class, ItemValuesMessage.class, 4, Side.CLIENT);
     }
 
     public static SimpleNetworkWrapper channel() {
@@ -68,5 +75,13 @@ public final class JassNetwork {
 
     static ServerJumpSink jumpSink() {
         return jumpSink;
+    }
+
+    public static void setItemValuesSink(ClientItemValuesSink sink) {
+        itemValuesSink = sink;
+    }
+
+    static ClientItemValuesSink itemValuesSink() {
+        return itemValuesSink;
     }
 }

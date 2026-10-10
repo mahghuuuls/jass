@@ -3,6 +3,7 @@ package com.mahghuuuls.jass.compat.elenai;
 import com.elenai.elenaidodge2.ModConfig;
 import com.elenai.elenaidodge2.init.EnchantmentInit;
 import com.elenai.elenaidodge2.util.Utils;
+import com.mahghuuuls.jass.gameplay.WeightPreviewSource;
 import com.mahghuuuls.jass.gameplay.WeightSource;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
@@ -24,7 +25,7 @@ import java.util.function.DoubleSupplier;
  * and Constructs' Armory weights. Elenai's integer rounding matters: fractional overrides are summed
  * in Elenai's own order before flooring.
  */
-public final class ElenaiWeight implements WeightSource {
+public final class ElenaiWeight implements WeightSource, WeightPreviewSource {
 
     static final String ID = "elenai";
 
@@ -68,6 +69,30 @@ public final class ElenaiWeight implements WeightSource {
             failed = true;
             logger.warn("Elenai Dodge 2 weight could not be computed ({}); the standalone weight is used", e.toString());
             return Double.NaN;
+        }
+    }
+
+    @Override
+    public boolean previewActive() {
+        return !failed && enabled.getAsBoolean();
+    }
+
+    /**
+     * Elenai's {@code Weights Override} entries for tooltip previews, resolved here exactly as the
+     * weight calculation resolves them and sent as {@code registry=weight}; empty after a failure.
+     */
+    @Override
+    public String[] previewOverrideLines() {
+        try {
+            List<WeightOverride> entries = overrides();
+            String[] lines = new String[entries.size()];
+            for (int i = 0; i < lines.length; i++) {
+                WeightOverride entry = entries.get(i);
+                lines[i] = entry.item.getRegistryName() + "=" + entry.weight;
+            }
+            return lines;
+        } catch (LinkageError | RuntimeException e) {
+            return new String[0];
         }
     }
 

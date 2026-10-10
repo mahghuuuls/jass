@@ -2,7 +2,10 @@ package com.mahghuuuls.jassfixture;
 
 import com.mahghuuuls.jass.api.client.ClientStaminaApi;
 import com.mahghuuuls.jass.api.client.ClientStaminaSnapshot;
+import com.mahghuuuls.jass.api.client.ItemStaminaInfo;
 import com.mahghuuuls.jass.api.client.StaminaHudRenderEvent;
+import com.mahghuuuls.jass.api.client.StaminaTooltipEvent;
+import net.minecraft.init.Items;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
@@ -61,5 +64,27 @@ final class FixtureClient {
         Minecraft mc = Minecraft.getMinecraft();
         mc.fontRenderer.drawStringWithShadow(text, event.getScaledWidth() / 2.0F + 10, event.getScaledHeight() - 60,
                 0x55FFFF);
+    }
+
+    private static double lastLoggedSwing = Double.NaN;
+
+    /**
+     * Add-on path of the tooltip API (REV-010 addendum): on golden swords, reads the item info and
+     * adds one marker line through {@code StaminaTooltipEvent}; logs when the value changes.
+     */
+    @SubscribeEvent
+    public void onStaminaTooltip(StaminaTooltipEvent event) {
+        if (event.getStack().getItem() != Items.GOLDEN_SWORD) {
+            return;
+        }
+        ItemStaminaInfo apiInfo = ClientStaminaApi.getItemInfo(event.getStack());
+        double swing = apiInfo.getSwingCost();
+        event.getLines().add("JASSFIXTURE tooltip swing=" + JassFixtureMod.format(swing)
+                + " event=" + JassFixtureMod.format(event.getInfo().getSwingCost()));
+        if (Double.compare(swing, lastLoggedSwing) != 0) {
+            lastLoggedSwing = swing;
+            JassFixtureMod.LOGGER.info("JASSFIXTURE tooltip golden_sword swing={} lines={}",
+                    JassFixtureMod.format(swing), event.getLines().size());
+        }
     }
 }

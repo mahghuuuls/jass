@@ -1,5 +1,7 @@
 package com.mahghuuuls.jass.compat.elenai;
 
+import com.mahghuuuls.jass.core.WeightPreview;
+
 /**
  * Elenai Dodge 2 1.1.0's armor weight arithmetic, reimplemented as plain math from its documented
  * behavior and decompiled reference (REQ-071, D9; no code copied) so it can be
@@ -14,7 +16,7 @@ final class ElenaiWeightMath {
 
     /** Weight of one armor piece without an override, as Elenai's client computes it. */
     static double pieceFromArmorPoints(int armorPoints) {
-        return (armorPoints / 2) * 1.8D;
+        return WeightPreview.elenaiFromArmorPoints(armorPoints);
     }
 
     /** Elenai's integer weight from the summed piece weights. */

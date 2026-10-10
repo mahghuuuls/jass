@@ -1,5 +1,6 @@
 package com.mahghuuuls.jass.gameplay;
 
+import com.mahghuuuls.jass.config.ItemKeys;
 import com.mahghuuuls.jass.Tags;
 import com.mahghuuuls.jass.api.IContextualStaminaModifierProvider;
 import com.mahghuuuls.jass.api.IItemStaminaModifierProvider;

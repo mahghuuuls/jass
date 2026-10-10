@@ -32,6 +32,12 @@ public final class JassClientConfig {
         SEGMENTS
     }
 
+    public enum ItemTooltips {
+        ALWAYS,
+        SHIFT,
+        OFF
+    }
+
     public enum FillDirection {
         LEFT_TO_RIGHT,
         RIGHT_TO_LEFT
@@ -111,4 +117,10 @@ public final class JassClientConfig {
     @Config.Name("classicbar_show_numbers")
     @Config.Comment("Show the Stamina number beside the jassstamina Classic Bar bar (Classic Bar's percentage setting applies).")
     public static boolean classicbarShowNumbers = true;
+
+    @Config.Name("item_tooltips")
+    @Config.Comment({"Stamina section in item tooltips: swing cost, bow drain, shield Stability and block shares,",
+            "armor weight, and configured item Stamina modifiers, with the server's values.",
+            "always, shift (only while Shift is held), or off."})
+    public static ItemTooltips itemTooltips = ItemTooltips.ALWAYS;
 }

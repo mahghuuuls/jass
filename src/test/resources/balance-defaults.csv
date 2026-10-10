@@ -71,3 +71,4 @@ bar_height,5,pixels,1 to 20,client,IMP-017,Fill area height; taller bars take a 
 bar_x_offset,0,pixels,any integer,client,IMP-017,Positive moves right
 bar_y_offset,0,pixels,any integer,client,IMP-017,Positive moves up
 bar_fill_direction,left_to_right,mode,left_to_right/right_to_left,client,IMP-017,
+item_tooltips,always,mode,always/shift/off,client,REV-010,Stamina section in item tooltips

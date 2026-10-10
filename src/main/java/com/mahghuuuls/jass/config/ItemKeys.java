@@ -1,6 +1,5 @@
-package com.mahghuuuls.jass.gameplay;
+package com.mahghuuuls.jass.config;
 
-import com.mahghuuuls.jass.config.ItemValueRules;
 import net.minecraft.item.ItemStack;
 
 /**

@@ -45,6 +45,13 @@ public final class ServerSettings {
     private final boolean elenaiWeightSourceIntegration;
     private final double elenaiWeightConversion;
     private final boolean debugLogging;
+    private final String[] armorWeightLines;
+    private final String[] meleeCostLines;
+    private final String[] bowDrawCostLines;
+    private final String[] shieldStabilityLines;
+    private final String[] shieldMeleeBlockLines;
+    private final String[] shieldProjectileBlockLines;
+    private final String[] itemModifierLines;
 
     ServerSettings(int revision) {
         this.revision = revision;
@@ -91,6 +98,13 @@ public final class ServerSettings {
         this.elenaiWeightSourceIntegration = JassConfig.elenaiWeightSourceIntegration;
         this.elenaiWeightConversion = JassConfig.elenaiWeightConversion;
         this.debugLogging = JassConfig.debugLogging;
+        this.armorWeightLines = JassConfig.armorWeight.clone();
+        this.meleeCostLines = JassConfig.meleeCostOverrides.clone();
+        this.bowDrawCostLines = JassConfig.bowDrawCostOverrides.clone();
+        this.shieldStabilityLines = JassConfig.shieldStability.clone();
+        this.shieldMeleeBlockLines = JassConfig.shieldMeleeBlock.clone();
+        this.shieldProjectileBlockLines = JassConfig.shieldProjectileBlock.clone();
+        this.itemModifierLines = JassConfig.itemStaminaModifiers.clone();
     }
 
     /** Increases each time configuration is reloaded, so caches can tell they are stale. */
@@ -239,5 +253,56 @@ public final class ServerSettings {
     public ItemList[] itemLists() {
         return new ItemList[]{itemModifiers, meleeCosts, bowDrawCosts, armorWeights, shieldStability, shieldMeleeBlock,
                 shieldProjectileBlock};
+    }
+
+    // The raw per-item lines and defaults, for the client's tooltips (REV-010): the client parses
+    // them with the same rule classes the server uses.
+
+    public double defaultMeleeCost() {
+        return defaultMeleeCost;
+    }
+
+    public double defaultBowDrawCost() {
+        return defaultBowDrawCost;
+    }
+
+    public double defaultShieldStability() {
+        return defaultShieldStability;
+    }
+
+    public double defaultShieldMeleeBlock() {
+        return defaultShieldMeleeBlock;
+    }
+
+    public double defaultShieldProjectileBlock() {
+        return defaultShieldProjectileBlock;
+    }
+
+    public String[] armorWeightLines() {
+        return armorWeightLines.clone();
+    }
+
+    public String[] meleeCostLines() {
+        return meleeCostLines.clone();
+    }
+
+    public String[] bowDrawCostLines() {
+        return bowDrawCostLines.clone();
+    }
+
+    public String[] shieldStabilityLines() {
+        return shieldStabilityLines.clone();
+    }
+
+    public String[] shieldMeleeBlockLines() {
+        return shieldMeleeBlockLines.clone();
+    }
+
+    public String[] shieldProjectileBlockLines() {
+        return shieldProjectileBlockLines.clone();
+    }
+
+    public String[] itemModifierLines() {
+        return itemModifierLines.clone();
     }
 }

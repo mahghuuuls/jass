@@ -20,5 +20,9 @@ public final class ClientProxy extends CommonProxy {
         MinecraftForge.EVENT_BUS.register(presenter);
         ClientIntegrations.wire(presenter);
         MinecraftForge.EVENT_BUS.register(ClientActionGuard.install(feedback));
+        TooltipPresenter tooltips = new TooltipPresenter();
+        JassNetwork.setItemValuesSink(tooltips);
+        ClientStaminaApi.bindItemInfo(tooltips::info);
+        MinecraftForge.EVENT_BUS.register(tooltips);
     }
 }

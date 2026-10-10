@@ -5,7 +5,7 @@ import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.config.ServerSettings;
 import com.mahghuuuls.jass.core.CostCalculator;
 import com.mahghuuuls.jass.gameplay.ActionGate;
-import com.mahghuuuls.jass.gameplay.ItemKeys;
+import com.mahghuuuls.jass.config.ItemKeys;
 import com.mahghuuuls.jass.gameplay.ShieldRules;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;

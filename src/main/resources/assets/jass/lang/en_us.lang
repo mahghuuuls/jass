@@ -1,0 +1,13 @@
+tooltip.jass.swing=Stamina per swing: %s
+tooltip.jass.draw=Stamina per second while drawn: %s
+tooltip.jass.draw_free=No Stamina while drawn
+tooltip.jass.stability=Stability: %s
+tooltip.jass.blocks=Blocks %s melee, %s projectiles
+tooltip.jass.block_cost=Block cost: %s Stamina per damage
+tooltip.jass.weight=Weight: %s
+tooltip.jass.weight_about=Weight: about %s
+tooltip.jass.stat.maximum=%s Maximum Stamina
+tooltip.jass.stat.regeneration=%s Stamina Regeneration
+tooltip.jass.stat.delay=%s Regeneration Delay
+tooltip.jass.stat.efficiency=%s Stamina Efficiency
+tooltip.jass.hold_shift=Hold Shift for Stamina

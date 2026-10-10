@@ -25,6 +25,7 @@ public final class JassGameplay {
     private final StaminaSessionManager sessions;
     private final ActionGate gate;
     private final SyncService sync;
+    private final ItemValuesPublisher itemValues = new ItemValuesPublisher();
 
     private JassGameplay() {
         this.profiles = new ProfileService();
@@ -38,6 +39,7 @@ public final class JassGameplay {
     public static JassGameplay create() {
         instance = new JassGameplay();
         MinecraftForge.EVENT_BUS.register(instance);
+        MinecraftForge.EVENT_BUS.register(instance.itemValues);
         return instance;
     }
 
@@ -62,6 +64,9 @@ public final class JassGameplay {
     /** Wires an integration's weight source (Elenai). */
     public void useWeightSource(WeightSource source) {
         profiles.preferWeightSource(source);
+        if (source instanceof WeightPreviewSource) {
+            itemValues.useWeightPreview((WeightPreviewSource) source);
+        }
     }
 
     /** Wires an integration's extra active slots (Baubles). */
