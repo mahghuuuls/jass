@@ -126,11 +126,11 @@ class TooltipLinesTest {
                 .set(Lines.MELEE_COST_OVERRIDES, new String[] {"minecraft:iron_sword=15"})
                 .set(Number.DEFAULT_SHIELD_STABILITY, 0)
                 .set(Lines.SHIELD_STABILITY, new String[] {"minecraft:shield=50"}));
-        assertEquals(15.0, t.meleeCost("minecraft:iron_sword", -1));
-        assertEquals(20.0, t.meleeCost("minecraft:stick", 0));
-        assertTrue(t.hasMeleeOverride("minecraft:iron_sword", -1));
-        assertFalse(t.hasMeleeOverride("minecraft:stick", 0));
-        assertEquals(50.0, t.stability("minecraft:shield", -1));
+        assertEquals(15.0, t.configuredMeleeCost("minecraft:iron_sword", -1));
+        assertTrue(Double.isNaN(t.configuredMeleeCost("minecraft:stick", 0)));
+        assertEquals(20.0, t.defaultMeleeCost());
+        assertEquals(50.0, t.configuredStability("minecraft:shield", -1));
+        assertTrue(Double.isNaN(t.configuredStability("minecraft:wooden_sword", -1)));
         assertTrue(Double.isNaN(t.armorWeight("minecraft:iron_chestplate", -1)));
     }
 

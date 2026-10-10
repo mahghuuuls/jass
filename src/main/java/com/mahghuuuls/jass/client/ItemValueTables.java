@@ -80,16 +80,23 @@ final class ItemValueTables {
         return Collections.unmodifiableMap(sums);
     }
 
-    boolean hasMeleeOverride(String name, int metadata) {
-        return !Double.isNaN(meleeCosts.valueFor(name, metadata, Double.NaN));
+    // Configured values (NaN when the item has no entry) and the server's defaults; the resolver
+    // asks addon providers between the two (REQ-086), as the server does.
+
+    double configuredMeleeCost(String name, int metadata) {
+        return meleeCosts.valueFor(name, metadata, Double.NaN);
     }
 
-    double meleeCost(String name, int metadata) {
-        return meleeCosts.valueFor(name, metadata, defaultMeleeCost);
+    double defaultMeleeCost() {
+        return defaultMeleeCost;
     }
 
-    double bowDrawCost(String name, int metadata) {
-        return bowDrawCosts.valueFor(name, metadata, defaultBowDrawCost);
+    double configuredBowDrawCost(String name, int metadata) {
+        return bowDrawCosts.valueFor(name, metadata, Double.NaN);
+    }
+
+    double defaultBowDrawCost() {
+        return defaultBowDrawCost;
     }
 
     double blockStaminaPerDamage() {
@@ -100,16 +107,28 @@ final class ItemValueTables {
         return stabilityScale;
     }
 
-    double stability(String name, int metadata) {
-        return stability.valueFor(name, metadata, defaultStability);
+    double configuredStability(String name, int metadata) {
+        return stability.valueFor(name, metadata, Double.NaN);
     }
 
-    double meleeBlock(String name, int metadata) {
-        return meleeBlock.valueFor(name, metadata, defaultMeleeBlock);
+    double defaultStability() {
+        return defaultStability;
     }
 
-    double projectileBlock(String name, int metadata) {
-        return projectileBlock.valueFor(name, metadata, defaultProjectileBlock);
+    double configuredMeleeBlock(String name, int metadata) {
+        return meleeBlock.valueFor(name, metadata, Double.NaN);
+    }
+
+    double defaultMeleeBlock() {
+        return defaultMeleeBlock;
+    }
+
+    double configuredProjectileBlock(String name, int metadata) {
+        return projectileBlock.valueFor(name, metadata, Double.NaN);
+    }
+
+    double defaultProjectileBlock() {
+        return defaultProjectileBlock;
     }
 
     /** Configured standalone weight, or {@code NaN} when the item has no entry. */

@@ -173,15 +173,7 @@ public final class ServerSettings {
         return fallbackWeightPerArmorPoint;
     }
 
-    /** Melee cost of one swing with the named item; the name and metadata come from the gameplay item-key rules. */
-    public double meleeCost(String registryName, int metadata) {
-        return meleeCosts.valueFor(registryName, metadata, defaultMeleeCost);
-    }
 
-    /** Stamina drained per second of drawing the named bow-draw item, before factors; 0 means free and never interrupted. */
-    public double bowDrawCost(String registryName, int metadata) {
-        return bowDrawCosts.valueFor(registryName, metadata, defaultBowDrawCost);
-    }
 
     public double blockStaminaPerDamage() {
         return blockStaminaPerDamage;
@@ -191,20 +183,8 @@ public final class ServerSettings {
         return stabilityScale;
     }
 
-    /** Stability of the named blocking item, or the default for items without an entry. */
-    public double shieldStability(String registryName, int metadata) {
-        return shieldStability.valueFor(registryName, metadata, defaultShieldStability);
-    }
 
-    /** Fraction of a blocked melee hit the named blocking item stops. */
-    public double shieldMeleeBlock(String registryName, int metadata) {
-        return shieldMeleeBlock.valueFor(registryName, metadata, defaultShieldMeleeBlock);
-    }
 
-    /** Fraction of a blocked projectile hit the named blocking item stops. */
-    public double shieldProjectileBlock(String registryName, int metadata) {
-        return shieldProjectileBlock.valueFor(registryName, metadata, defaultShieldProjectileBlock);
-    }
 
     /** Guard Break length in seconds. */
     public double guardBreakCooldown() {
@@ -304,5 +284,28 @@ public final class ServerSettings {
 
     public String[] itemModifierLines() {
         return itemModifierLines.clone();
+    }
+
+    // Configured values only, NaN when the item has no entry (REQ-086: configuration, then addon
+    // providers, then the default).
+
+    public double configuredMeleeCost(String registryName, int metadata) {
+        return meleeCosts.valueFor(registryName, metadata, Double.NaN);
+    }
+
+    public double configuredBowDrawCost(String registryName, int metadata) {
+        return bowDrawCosts.valueFor(registryName, metadata, Double.NaN);
+    }
+
+    public double configuredShieldStability(String registryName, int metadata) {
+        return shieldStability.valueFor(registryName, metadata, Double.NaN);
+    }
+
+    public double configuredShieldMeleeBlock(String registryName, int metadata) {
+        return shieldMeleeBlock.valueFor(registryName, metadata, Double.NaN);
+    }
+
+    public double configuredShieldProjectileBlock(String registryName, int metadata) {
+        return shieldProjectileBlock.valueFor(registryName, metadata, Double.NaN);
     }
 }

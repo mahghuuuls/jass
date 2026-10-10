@@ -1,5 +1,6 @@
 package com.mahghuuuls.jassfixture;
 
+import com.mahghuuuls.jass.api.IItemValueProvider;
 import com.mahghuuuls.jass.api.IStaminaService;
 import com.mahghuuuls.jass.api.JassActions;
 import com.mahghuuuls.jass.api.JassApi;
@@ -11,7 +12,10 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
@@ -52,6 +56,37 @@ public final class JassFixtureMod {
             }
             return StaminaContribution.EMPTY;
         });
+        JassApi.registerItemValueProvider(new ResourceLocation("jassfixture", "values"), new IItemValueProvider() {
+            // Golden hoe: no configuration entry, so the provider's swing cost applies.
+            @Override
+            public double meleeCost(ItemStack stack) {
+                // Wooden hoe: the campaign configures 3, which wins over this 5.
+                return stack.getItem() == Items.GOLDEN_HOE ? 7.0 : stack.getItem() == Items.WOODEN_HOE ? 5.0 : Double.NaN;
+            }
+
+            // Shield: applies only while the configuration has no shield entries (configuration wins).
+            @Override
+            public double shieldStability(ItemStack stack) {
+                return stack.getItem() == Items.SHIELD ? 30.0 : Double.NaN;
+            }
+
+            @Override
+            public double shieldMeleeBlock(ItemStack stack) {
+                return stack.getItem() == Items.SHIELD ? 0.5 : Double.NaN;
+            }
+
+            @Override
+            public double shieldProjectileBlock(ItemStack stack) {
+                return stack.getItem() == Items.SHIELD ? 0.25 : Double.NaN;
+            }
+
+            // Chainmail chestplate has a configured weight (4), which wins; the pumpkin has none.
+            @Override
+            public double armorWeight(ItemStack stack) {
+                return stack.getItem() == Items.CHAINMAIL_CHESTPLATE ? 9.0
+                        : stack.getItem() == Item.getItemFromBlock(Blocks.PUMPKIN) ? 3.0 : Double.NaN;
+            }
+        });
         MinecraftForge.EVENT_BUS.register(this);
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
             FixtureClient.init();
@@ -64,8 +99,16 @@ public final class JassFixtureMod {
         event.registerServerCommand(new FixtureCommand());
     }
 
+    private static String lastCostContext = "";
+
     @SubscribeEvent
     public void onCost(StaminaCostEvent event) {
+        String context = event.getAction() + " item=" + (event.getStack().isEmpty() ? "none"
+                : event.getStack().getItem().getRegistryName()) + " hand=" + event.getHand();
+        if (!context.equals(lastCostContext)) {
+            lastCostContext = context;
+            LOGGER.info("JASSFIXTURE cost context action={} cost={}", context, format(event.getCost()));
+        }
         if (halveMelee && JassActions.MELEE.equals(event.getAction())) {
             event.setCost(event.getCost() / 2.0);
             LOGGER.info("JASSFIXTURE cost action={} halvedTo={}", event.getAction(), format(event.getCost()));

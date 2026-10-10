@@ -4,6 +4,8 @@ import com.mahghuuuls.jass.Tags;
 import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.core.SwingRateLimiter;
 import com.mahghuuuls.jass.gameplay.ActionGate;
+import com.mahghuuuls.jass.gameplay.ItemValueLookup;
+import com.mahghuuuls.jass.gameplay.CostKind;
 import com.mahghuuuls.jass.gameplay.AttackHandSource;
 import com.mahghuuuls.jass.config.ItemKeys;
 import com.mahghuuuls.jass.api.JassActions;
@@ -65,7 +67,7 @@ public final class MeleeHook implements JassNetwork.ServerInputSink {
             LOGGER.info("JASS melee player={} hand={} item={}", player.getName(),
                     hand == EnumHand.OFF_HAND ? "off_hand" : "main_hand", ItemKeys.registryName(stack));
         }
-        if (!gate.tryDiscrete(player, JassActions.MELEE, meleeCost(stack))) {
+        if (!gate.tryDiscrete(player, JassActions.MELEE, ItemValueLookup.meleeCost(stack), CostKind.STANDARD, stack, hand)) {
             event.setCanceled(true);
         }
     }
@@ -77,15 +79,13 @@ public final class MeleeHook implements JassNetwork.ServerInputSink {
         if (!limiter.tryAccept(player.world.getTotalWorldTime())) {
             return;
         }
-        gate.tryDiscrete(player, JassActions.MELEE, meleeCost(player.getHeldItemMainhand()));
+        ItemStack stack = player.getHeldItemMainhand();
+        gate.tryDiscrete(player, JassActions.MELEE, ItemValueLookup.meleeCost(stack), CostKind.STANDARD, stack,
+                EnumHand.MAIN_HAND);
     }
 
     @Override
     public void onRefusedAttack(EntityPlayerMP player) {
         gate.reportRefusedAttempt(player, JassActions.MELEE);
-    }
-
-    private static double meleeCost(ItemStack stack) {
-        return ConfigModel.server().meleeCost(ItemKeys.registryName(stack), ItemKeys.metadata(stack));
     }
 }

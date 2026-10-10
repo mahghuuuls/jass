@@ -5,6 +5,7 @@ import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.config.ServerSettings;
 import com.mahghuuuls.jass.core.CostCalculator;
 import com.mahghuuuls.jass.gameplay.ActionGate;
+import com.mahghuuuls.jass.gameplay.ItemValueLookup;
 import com.mahghuuuls.jass.config.ItemKeys;
 import com.mahghuuuls.jass.gameplay.ShieldRules;
 import net.minecraft.entity.EntityLivingBase;
@@ -96,15 +97,14 @@ public final class ShieldHook {
         }
         ItemStack shield = player.getActiveItemStack();
         String name = ItemKeys.registryName(shield);
-        int metadata = ItemKeys.metadata(shield);
         ServerSettings settings = ConfigModel.server();
-        double stability = settings.shieldStability(name, metadata);
+        double stability = ItemValueLookup.shieldStability(shield);
         double baseCost = CostCalculator.blockBaseCost(amount, settings.blockStaminaPerDamage(),
                 CostCalculator.stabilityFactor(settings.stabilityScale(), stability));
-        ActionGate.BlockOutcome outcome = gate.payBlock(player, baseCost);
+        ActionGate.BlockOutcome outcome = gate.payBlock(player, baseCost, shield, player.getActiveHand());
         double fraction = kind == ShieldRules.BlockKind.MELEE
-                ? settings.shieldMeleeBlock(name, metadata)
-                : settings.shieldProjectileBlock(name, metadata);
+                ? ItemValueLookup.shieldMeleeBlock(shield)
+                : ItemValueLookup.shieldProjectileBlock(shield);
         double leaked = ShieldRules.leakedDamage(amount, fraction);
         if (debug) {
             LOGGER.info("JASS block player={} kind={} outcome={} amount={} item={} stability={} baseCost={} fraction={} leaked={}",

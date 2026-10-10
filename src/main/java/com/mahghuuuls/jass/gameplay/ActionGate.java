@@ -11,6 +11,8 @@ import com.mahghuuuls.jass.core.CostCalculator;
 import com.mahghuuuls.jass.core.StaminaPool;
 import com.mahghuuuls.jass.core.StaminaProfile;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.EnumHand;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import org.apache.logging.log4j.LogManager;
@@ -85,6 +87,12 @@ public final class ActionGate {
 
     /** As {@link #tryDiscrete(EntityPlayer, ResourceLocation, double)}, with the weight multiplier for a Movement Action. */
     public boolean tryDiscrete(EntityPlayer player, ResourceLocation action, double baseCost, CostKind kind) {
+        return tryDiscrete(player, action, baseCost, kind, ItemStack.EMPTY, null);
+    }
+
+    /** As above, telling the cost event which item and hand made the action (REQ-087). */
+    public boolean tryDiscrete(EntityPlayer player, ResourceLocation action, double baseCost, CostKind kind,
+            ItemStack stack, EnumHand hand) {
         if (costsSuspended(player)) {
             return true;
         }
@@ -96,7 +104,7 @@ public final class ActionGate {
         ServerSettings settings = ConfigModel.server();
         double factors = factors(kind, profile, settings);
         double finalCost = participate(player, action,
-                CostCalculator.finalDiscreteCost(baseCost, factors, settings.minDiscreteCost()));
+                CostCalculator.finalDiscreteCost(baseCost, factors, settings.minDiscreteCost()), stack, hand);
         double floor = StaminaPool.debtFloor(profile.maximum(), settings.maxDebtFraction());
         double before = session.pool.stamina();
         session.pool.payDiscrete(finalCost, floor, profile.regenerationDelay());
@@ -118,6 +126,12 @@ public final class ActionGate {
      *         caller must stop it (a denial is recorded)
      */
     public boolean drainContinuous(EntityPlayer player, ResourceLocation action, double costPerSecond, CostKind kind) {
+        return drainContinuous(player, action, costPerSecond, kind, ItemStack.EMPTY, null);
+    }
+
+    /** As above, telling the cost event which item and hand made the action (REQ-087). */
+    public boolean drainContinuous(EntityPlayer player, ResourceLocation action, double costPerSecond, CostKind kind,
+            ItemStack stack, EnumHand hand) {
         if (costsSuspended(player)) {
             return true;
         }
@@ -130,7 +144,8 @@ public final class ActionGate {
         double factors = factors(kind, profile, settings);
         double before = session.pool.stamina();
         double drained = session.pool.drainContinuous(
-                participate(player, action, CostCalculator.continuousCost(costPerSecond, factors, SECONDS_PER_TICK)),
+                participate(player, action, CostCalculator.continuousCost(costPerSecond, factors, SECONDS_PER_TICK),
+                        stack, hand),
                 profile.regenerationDelay());
         notifyChange(player, before, session.pool.stamina(), profile.maximum(), action);
         if (settings.debugLogging() && allowDrainLine(session, player.world.getTotalWorldTime())) {
@@ -223,8 +238,9 @@ public final class ActionGate {
     }
 
     /** Lets addons adjust or cancel a final cost (REQ-083); a cancelled event makes the action free. */
-    private static double participate(EntityPlayer player, ResourceLocation action, double cost) {
-        StaminaCostEvent event = new StaminaCostEvent(player, action, cost);
+    private static double participate(EntityPlayer player, ResourceLocation action, double cost, ItemStack stack,
+            EnumHand hand) {
+        StaminaCostEvent event = new StaminaCostEvent(player, action, cost, stack, hand);
         if (MinecraftForge.EVENT_BUS.post(event)) {
             return 0.0;
         }
@@ -265,10 +281,15 @@ public final class ActionGate {
      * when the payment leaves Stamina at zero or below (REQ-037). Exempt players always block.
      */
     public BlockOutcome payBlock(EntityPlayer player, double baseCost) {
+        return payBlock(player, baseCost, ItemStack.EMPTY, null);
+    }
+
+    /** As above, with the blocking item and hand for the cost event (REQ-087). */
+    public BlockOutcome payBlock(EntityPlayer player, double baseCost, ItemStack stack, EnumHand hand) {
         if (costsSuspended(player)) {
             return BlockOutcome.BLOCKED;
         }
-        if (!tryDiscrete(player, JassActions.BLOCK, baseCost, CostKind.STANDARD)) {
+        if (!tryDiscrete(player, JassActions.BLOCK, baseCost, CostKind.STANDARD, stack, hand)) {
             return BlockOutcome.REFUSED;
         }
         StaminaSession session = sessions.session(player);

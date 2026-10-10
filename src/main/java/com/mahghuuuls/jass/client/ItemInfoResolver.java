@@ -1,10 +1,13 @@
 package com.mahghuuuls.jass.client;
 
+import com.mahghuuuls.jass.api.ItemValueKind;
+import com.mahghuuuls.jass.api.JassApi;
 import com.mahghuuuls.jass.api.client.ItemStaminaInfo;
 import com.mahghuuuls.jass.config.ItemKeys;
 import com.mahghuuuls.jass.core.CostCalculator;
 import com.mahghuuuls.jass.core.ModifierSet;
 import com.mahghuuuls.jass.core.StatField;
+import com.mahghuuuls.jass.core.ValueOrder;
 import com.mahghuuuls.jass.core.WeightPreview;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.SharedMonsterAttributes;
@@ -18,8 +21,9 @@ import net.minecraftforge.common.ISpecialArmor;
 
 /**
  * Which Stamina values an item stack shows (REQ-058), read from the server's tables with the same
- * item tests the server uses: melee weapons have an attack damage attribute in the main hand (or a
- * melee override, since every swing is charged), bow-draw items are drawn like a bow right now (the
+ * item tests the server uses, and the server's order for each value (configuration, then addon
+ * providers, then the default; REQ-086): melee weapons have an attack damage attribute in the main
+ * hand (or a configured or provided melee cost, since every swing is charged), bow-draw items are drawn like a bow right now (the
  * server drains only those), blocking items use the block action or are shields, and armor is worn in
  * an armor slot.
  */
@@ -38,15 +42,23 @@ final class ItemInfoResolver {
         int metadata = ItemKeys.metadata(stack);
         ItemStaminaInfo.Builder b = new ItemStaminaInfo.Builder();
 
-        if (hasAttackDamage(stack) || t.hasMeleeOverride(name, metadata)) {
-            b.swingCost(t.meleeCost(name, metadata));
+        double configuredMelee = t.configuredMeleeCost(name, metadata);
+        double providedMelee = Double.isNaN(configuredMelee)
+                ? JassApi.getProvidedItemValue(ItemValueKind.MELEE_COST, stack) : Double.NaN;
+        if (hasAttackDamage(stack) || !Double.isNaN(configuredMelee) || !Double.isNaN(providedMelee)) {
+            b.swingCost(ValueOrder.first(configuredMelee, providedMelee, t.defaultMeleeCost()));
         }
         if (stack.getItemUseAction() == EnumAction.BOW) {
-            b.drawPerSecond(t.bowDrawCost(name, metadata));
+            b.drawPerSecond(pick(t.configuredBowDrawCost(name, metadata), ItemValueKind.BOW_DRAW_COST, stack,
+                    t.defaultBowDrawCost()));
         }
         if (stack.getItemUseAction() == EnumAction.BLOCK || stack.getItem().isShield(stack, player)) {
-            double stability = t.stability(name, metadata);
-            b.blocking(stability, t.meleeBlock(name, metadata), t.projectileBlock(name, metadata),
+            double stability = pick(t.configuredStability(name, metadata), ItemValueKind.SHIELD_STABILITY, stack,
+                    t.defaultStability());
+            b.blocking(stability,
+                    pick(t.configuredMeleeBlock(name, metadata), ItemValueKind.SHIELD_MELEE_BLOCK, stack, t.defaultMeleeBlock()),
+                    pick(t.configuredProjectileBlock(name, metadata), ItemValueKind.SHIELD_PROJECTILE_BLOCK, stack,
+                            t.defaultProjectileBlock()),
                     t.blockStaminaPerDamage() * CostCalculator.stabilityFactor(t.stabilityScale(), stability));
         }
         weight(stack, player, t, name, metadata, b);
@@ -90,11 +102,17 @@ final class ItemInfoResolver {
             }
             return;
         }
-        double configured = t.armorWeight(name, metadata);
+        double configured = pick(t.armorWeight(name, metadata), ItemValueKind.ARMOR_WEIGHT, stack, Double.NaN);
         double points = armorPoints(stack, player, slot);
         if (isArmor || !Double.isNaN(configured) || points > 0.0) {
             b.weight(WeightPreview.standalone(configured, points, t.fallbackWeightPerArmorPoint()), false);
         }
+    }
+
+    /** Configuration, then addon providers, then the server's default (REQ-086), as on the server. */
+    private static double pick(double configured, ItemValueKind kind, ItemStack stack, double fallback) {
+        return ValueOrder.first(configured,
+                Double.isNaN(configured) ? JassApi.getProvidedItemValue(kind, stack) : Double.NaN, fallback);
     }
 
     private static boolean hasAttackDamage(ItemStack stack) {

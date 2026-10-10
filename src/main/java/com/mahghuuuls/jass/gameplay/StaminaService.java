@@ -5,6 +5,8 @@ import com.mahghuuuls.jass.api.StaminaMutationResult;
 import com.mahghuuuls.jass.api.StaminaPublicState;
 import com.mahghuuuls.jass.core.StaminaProfile;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.EnumHand;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
 /**
@@ -87,20 +89,32 @@ final class StaminaService implements IStaminaService {
     @Override
     public StaminaMutationResult tryDiscreteAction(EntityPlayer player, ResourceLocation action, double baseCost,
             boolean movement) {
+        return tryDiscreteAction(player, action, baseCost, movement, ItemStack.EMPTY, null);
+    }
+
+    @Override
+    public StaminaMutationResult tryDiscreteAction(EntityPlayer player, ResourceLocation action, double baseCost,
+            boolean movement, ItemStack stack, EnumHand hand) {
         check(player, baseCost, action);
         StaminaPublicState before = getState(player);
-        boolean done = before != null
-                && gate.tryDiscrete(player, action, baseCost, movement ? CostKind.MOVEMENT : CostKind.STANDARD);
+        boolean done = before != null && gate.tryDiscrete(player, action, baseCost,
+                movement ? CostKind.MOVEMENT : CostKind.STANDARD, stack == null ? ItemStack.EMPTY : stack, hand);
         return new StaminaMutationResult(done, baseCost, action, before, getState(player));
     }
 
     @Override
     public StaminaMutationResult drainContinuousTick(EntityPlayer player, ResourceLocation action,
             double costPerSecond, boolean movement) {
+        return drainContinuousTick(player, action, costPerSecond, movement, ItemStack.EMPTY, null);
+    }
+
+    @Override
+    public StaminaMutationResult drainContinuousTick(EntityPlayer player, ResourceLocation action,
+            double costPerSecond, boolean movement, ItemStack stack, EnumHand hand) {
         check(player, costPerSecond, action);
         StaminaPublicState before = getState(player);
         boolean done = before != null && gate.drainContinuous(player, action, costPerSecond,
-                movement ? CostKind.MOVEMENT : CostKind.STANDARD);
+                movement ? CostKind.MOVEMENT : CostKind.STANDARD, stack == null ? ItemStack.EMPTY : stack, hand);
         return new StaminaMutationResult(done, costPerSecond, action, before, getState(player));
     }
 

@@ -63,7 +63,7 @@ final class WeightResolver implements WeightSource {
             if (stack.isEmpty()) {
                 continue;
             }
-            double configured = settings.armorWeight(ItemKeys.registryName(stack), ItemKeys.metadata(stack));
+            double configured = ItemValueLookup.armorWeight(stack);
             total += ArmorWeight.itemWeight(configured, armorPoints(player, stack, slot),
                     settings.fallbackWeightPerArmorPoint());
         }

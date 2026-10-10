@@ -26,3 +26,6 @@ run
 
 # third-party jars used only for development
 libs
+
+# JUnit writes Log4j output here
+logs/

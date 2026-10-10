@@ -1,6 +1,8 @@
 package com.mahghuuuls.jass.api;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.EnumHand;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
 /**
@@ -53,4 +55,16 @@ public interface IStaminaService {
      */
     StaminaMutationResult drainContinuousTick(EntityPlayer player, ResourceLocation action, double costPerSecond,
             boolean movement);
+
+    /** As {@link #tryDiscreteAction}, telling cost event listeners the item and hand (REQ-087). */
+    default StaminaMutationResult tryDiscreteAction(EntityPlayer player, ResourceLocation action, double baseCost,
+            boolean movement, ItemStack stack, EnumHand hand) {
+        return tryDiscreteAction(player, action, baseCost, movement);
+    }
+
+    /** As {@link #drainContinuousTick}, telling cost event listeners the item and hand (REQ-087). */
+    default StaminaMutationResult drainContinuousTick(EntityPlayer player, ResourceLocation action,
+            double costPerSecond, boolean movement, ItemStack stack, EnumHand hand) {
+        return drainContinuousTick(player, action, costPerSecond, movement);
+    }
 }

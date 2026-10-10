@@ -3,6 +3,7 @@ package com.mahghuuuls.jass.gameplay.hooks;
 import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.gameplay.ActionGate;
 import com.mahghuuuls.jass.gameplay.CostKind;
+import com.mahghuuuls.jass.gameplay.ItemValueLookup;
 import com.mahghuuuls.jass.config.ItemKeys;
 import com.mahghuuuls.jass.api.JassActions;
 import net.minecraft.entity.player.EntityPlayer;
@@ -92,8 +93,9 @@ public final class BowHook {
         if (!isBowDraw(stack)) {
             return;
         }
-        double rate = ConfigModel.server().bowDrawCost(ItemKeys.registryName(stack), ItemKeys.metadata(stack));
-        if (rate > 0.0 && !gate.drainContinuous(player, JassActions.BOW, rate, CostKind.STANDARD)) {
+        double rate = ItemValueLookup.bowDrawCost(stack);
+        if (rate > 0.0 && !gate.drainContinuous(player, JassActions.BOW, rate, CostKind.STANDARD, stack,
+                player.getActiveHand())) {
             // Clears the draw without the release path, so no arrow is fired or used up. The gate
             // recorded the denial; a held right click retrying next is the same attempt.
             player.resetActiveHand();
