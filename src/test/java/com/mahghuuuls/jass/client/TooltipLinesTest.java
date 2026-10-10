@@ -43,9 +43,9 @@ class TooltipLinesTest {
     }
 
     @Test
-    void freeDrawAndElenaiAboutWeight() {
-        ItemStaminaInfo info = new ItemStaminaInfo.Builder().drawPerSecond(0).weight(7.56, true).build();
-        assertEquals(Arrays.asList(GRAY + "tooltip.jass.draw_free[]", GRAY + "tooltip.jass.weight_about[7.56]"),
+    void freeDrawAndElenaiWeightAsAPlainNumber() {
+        ItemStaminaInfo info = new ItemStaminaInfo.Builder().drawPerSecond(0).weight(7.0, true).build();
+        assertEquals(Arrays.asList(GRAY + "tooltip.jass.draw_free[]", GRAY + "tooltip.jass.weight[7]"),
                 TooltipLines.lines(info, T));
     }
 

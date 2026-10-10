@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * Mixins into other mods' classes, queued by MixinBooter once mods are known: the Elenai Dodge 2
- * feather-bar Mixin only when Elenai is present (REV-008). This class must live outside every Mixin
+ * feather-bar and weight-tooltip Mixins only when Elenai is present (REV-008, REV-012). This class must live outside every Mixin
  * package: Mixin refuses to load ordinary classes from a package a Mixin configuration owns.
  */
 public final class JassLateMixins implements ILateMixinLoader {

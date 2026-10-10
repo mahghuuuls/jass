@@ -170,7 +170,8 @@ public final class ClientActionGuard {
      * At zero Stamina a bow-draw item (use action bow drawing, as on the server) does not start a
      * draw locally. Vanilla has already sent the use packet; the server refuses it and records the
      * denial (once per held right click), which drives the flash. Without this the client would
-     * show a draw the server never started. The cancelled event answers PASS, so vanilla then tries
+     * show a draw the server never started (the server refuses the right click too, answering FAIL, so it
+     * never resends the inventory). The cancelled client event answers PASS, so vanilla then tries
      * the other hand, as it does for a bow without arrows: a shield there is raised.
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)

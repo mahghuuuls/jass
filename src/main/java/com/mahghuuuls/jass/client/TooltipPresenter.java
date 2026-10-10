@@ -43,6 +43,7 @@ public final class TooltipPresenter implements JassNetwork.ClientItemValuesSink 
     public void onItemValues(ItemValuesMessage message) {
         Minecraft.getMinecraft().addScheduledTask(() -> {
             tables = new ItemValueTables(message);
+            ElenaiWeightTooltip.setElenaiWeightSource(message.elenaiWeightSource());
             if (ConfigModel.server().debugLogging()) {
                 // Single player shares the server's settings; on a remote server this follows the local file.
                 JustAnotherStaminaSystemMod.LOGGER.info("JASS item values received from the server (elenaiWeight={})",
@@ -53,7 +54,10 @@ public final class TooltipPresenter implements JassNetwork.ClientItemValuesSink 
 
     @SubscribeEvent
     public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
-        Minecraft.getMinecraft().addScheduledTask(() -> tables = null);
+        Minecraft.getMinecraft().addScheduledTask(() -> {
+            tables = null;
+            ElenaiWeightTooltip.setElenaiWeightSource(false);
+        });
     }
 
     @SubscribeEvent

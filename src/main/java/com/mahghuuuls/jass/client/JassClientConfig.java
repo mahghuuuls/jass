@@ -55,6 +55,10 @@ public final class JassClientConfig {
     @Config.Comment("With Elenai Dodge 2: hide its feather bar while the server makes dodges cost Stamina instead of feathers.")
     public static boolean hideElenaiFeatherHud = true;
 
+    @Config.Name("hide_elenai_weight_tooltip")
+    @Config.Comment("With Elenai Dodge 2: hide its armor weight tooltip (steel feathers) while the server takes armor weight from Elenai; JASS's own Weight line shows the same weight.")
+    public static boolean hideElenaiWeightTooltip = true;
+
     @Config.Name("denied_action_sound")
     @Config.Comment("Play a soft sound, at most once per second, when an action is refused for lack of Stamina.")
     public static boolean deniedActionSound = false;

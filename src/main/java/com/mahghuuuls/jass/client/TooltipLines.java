@@ -41,9 +41,8 @@ final class TooltipLines {
             lines.add(TextFormatting.GRAY + t.format("tooltip.jass.block_cost", number(info.getBlockCostPerDamage())));
         }
         if (!Double.isNaN(info.getWeight())) {
-            lines.add(TextFormatting.GRAY + (info.isWeightApproximate()
-                    ? t.format("tooltip.jass.weight_about", number(info.getWeight()))
-                    : t.format("tooltip.jass.weight", number(info.getWeight()))));
+            // Elenai's piece weights are estimates (it rounds the whole set); shown as plain numbers (owner choice).
+            lines.add(TextFormatting.GRAY + t.format("tooltip.jass.weight", number(info.getWeight())));
         }
         for (ItemStaminaInfo.Modifier modifier : info.getModifiers()) {
             lines.add((modifier.isBeneficial() ? TextFormatting.BLUE : TextFormatting.RED) + modifierText(modifier, t));
@@ -51,7 +50,7 @@ final class TooltipLines {
         return lines;
     }
 
-    /** {@code +15 Maximum Stamina}, {@code -20% Stamina Regeneration}, {@code +0.5 s Regeneration Delay}. */
+    /** {@code +15 Maximum Stamina}, {@code -20% Stamina Regeneration}, {@code +0.5 s Stamina Regeneration Delay}. */
     static String modifierText(ItemStaminaInfo.Modifier modifier, Translator t) {
         String field = modifier.getField();
         double value = modifier.getValue();

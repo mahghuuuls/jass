@@ -8,7 +8,9 @@ import com.mahghuuuls.jass.api.JassActions;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumActionResult;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -39,7 +41,24 @@ public final class BowHook {
         this.gate = gate;
     }
 
-    /** LOWEST, so only draws that would really start are refused and counted as denials. */
+    /**
+     * Refuses a bow-draw right click at zero before the item is used (server side). Refusing only
+     * at the use start made vanilla resend the whole inventory (the item reported success but no
+     * draw started), which plays the held item's re-equip animation on the client; vanilla avoids
+     * that for a bow without arrows by failing early, as this does (campaign H finding).
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        EntityPlayer player = event.getEntityPlayer();
+        if (player.world.isRemote || !isBowDraw(event.getItemStack()) || gate.canStart(player)) {
+            return;
+        }
+        event.setCanceled(true);
+        event.setCancellationResult(EnumActionResult.FAIL);
+        refuse(player);
+    }
+
+    /** LOWEST, so only draws that would really start are refused; covers uses started other ways. */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onUseStart(LivingEntityUseItemEvent.Start event) {
         if (!(event.getEntityLiving() instanceof EntityPlayer) || event.getEntityLiving().world.isRemote
@@ -51,6 +70,11 @@ public final class BowHook {
             return;
         }
         event.setCanceled(true);
+        refuse(player);
+    }
+
+    /** Records one denial per held attempt. */
+    private void refuse(EntityPlayer player) {
         long now = player.world.getTotalWorldTime();
         Long last = lastRefusedTick.put(player, now);
         if (last == null || now - last > HELD_RETRY_GAP_TICKS) {
