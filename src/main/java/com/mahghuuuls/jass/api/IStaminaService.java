@@ -17,6 +17,7 @@ public interface IStaminaService {
 
     double getMaximumStamina(EntityPlayer player);
 
+    /** Base Stamina Regeneration per second; not scaled by a raised blocking item (REV-015). */
     double getStaminaRegeneration(EntityPlayer player);
 
     double getRegenerationDelay(EntityPlayer player);

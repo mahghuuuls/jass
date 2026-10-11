@@ -8,12 +8,14 @@ import com.mahghuuuls.jass.api.StaminaChangeEvent;
 import com.mahghuuuls.jass.api.StaminaContribution;
 import com.mahghuuuls.jass.api.StaminaCostEvent;
 import com.mahghuuuls.jass.api.StaminaMutationResult;
+import com.mahghuuuls.jass.api.StaminaPublicState;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
+import net.minecraft.item.EnumAction;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
@@ -24,6 +26,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -119,6 +122,22 @@ public final class JassFixtureMod {
             event.setCost(event.getCost() / 2.0);
             LOGGER.info("JASSFIXTURE cost action={} halvedTo={}", event.getAction(), format(event.getCost()));
         }
+    }
+
+    /** Once a second while Stamina is below maximum: the internal value and whether a shield is raised (REV-015 cards). */
+    @SubscribeEvent
+    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || event.player.world.isRemote
+                || event.player.world.getTotalWorldTime() % 20 != 0) {
+            return;
+        }
+        StaminaPublicState state = JassApi.getStaminaService().getState(event.player);
+        if (state == null || state.getStamina() >= state.getMaximumStamina()) {
+            return;
+        }
+        boolean raised = event.player.isHandActive()
+                && event.player.getActiveItemStack().getItemUseAction() == EnumAction.BLOCK;
+        LOGGER.info("JASSFIXTURE pool internal={} shieldRaised={}", format(state.getStamina()), raised);
     }
 
     @SubscribeEvent

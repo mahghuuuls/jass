@@ -57,6 +57,7 @@ default_shield_stability,0,stat points,>=0,server,decision D4,Blocking item with
 default_shield_melee_block,1.0,fraction,0 to 1,server,decision D4,Blocking item without an explicit melee fraction (vanilla behavior)
 default_shield_projectile_block,1.0,fraction,0 to 1,server,decision D4,Blocking item without an explicit projectile fraction (vanilla behavior)
 guard_break_cooldown,2.0,seconds,>=0,server,draft 10.24,
+shield_raised_regeneration,0.2,fraction,0 to 1,server,REV-015,Share of Stamina Regeneration kept while a blocking item is raised
 inhibited_integration,true,boolean,true/false,server,draft 10.25,Takes effect only when Inhibited is installed
 elenai_dodge_resource_integration,true,boolean,true/false,server,draft 10.26,Takes effect only when Elenai Dodge 2 is installed
 elenai_weight_source_integration,true,boolean,true/false,server,draft 10.27,Takes effect only when Elenai Dodge 2 is installed

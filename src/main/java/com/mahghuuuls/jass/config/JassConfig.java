@@ -199,6 +199,13 @@ public final class JassConfig {
     @Config.RangeDouble(min = 0.0, max = 3600.0)
     public static double guardBreakCooldown = 2.0;
 
+    @Config.Name("shield_raised_regeneration")
+    @Config.Comment({"Share of Stamina Regeneration kept while a blocking item is raised (0 stops regeneration while raised, 1 keeps the full rate).",
+            "The Regeneration Delay still counts down; lowering the item restores the full rate at once.",
+            "Not applied while costs are suspended (Creative exemption, Inhibited gating)."})
+    @Config.RangeDouble(min = 0.0, max = 1.0)
+    public static double shieldRaisedRegeneration = 0.2;
+
     @Config.Name("item_stamina_modifiers")
     @Config.Comment({
             "Item Stamina Modifiers, one rule per line: namespace:item[@metadata or @*]=field:value;field:value",

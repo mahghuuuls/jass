@@ -37,6 +37,7 @@ public final class ServerSettings {
     private final double defaultShieldMeleeBlock;
     private final double defaultShieldProjectileBlock;
     private final double guardBreakCooldown;
+    private final double shieldRaisedRegeneration;
     private final ItemModifierRules itemModifiers;
     private final boolean inhibitedIntegration;
     private final Set<String> disabledProviders;
@@ -86,6 +87,7 @@ public final class ServerSettings {
         this.defaultShieldMeleeBlock = JassConfig.defaultShieldMeleeBlock;
         this.defaultShieldProjectileBlock = JassConfig.defaultShieldProjectileBlock;
         this.guardBreakCooldown = JassConfig.guardBreakCooldown;
+        this.shieldRaisedRegeneration = JassConfig.shieldRaisedRegeneration;
         this.itemModifiers = ItemModifierRules.parse("item_stamina_modifiers", JassConfig.itemStaminaModifiers);
         this.inhibitedIntegration = JassConfig.inhibitedIntegration;
         Set<String> disabled = new HashSet<>();
@@ -193,6 +195,11 @@ public final class ServerSettings {
     /** Guard Break length in seconds. */
     public double guardBreakCooldown() {
         return guardBreakCooldown;
+    }
+
+    /** Share of Stamina Regeneration kept while a blocking item is raised (REV-015). */
+    public double shieldRaisedRegeneration() {
+        return shieldRaisedRegeneration;
     }
 
     /** Configured Item Stamina Modifier rules. */

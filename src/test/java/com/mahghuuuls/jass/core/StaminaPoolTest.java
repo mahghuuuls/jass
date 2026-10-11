@@ -72,6 +72,21 @@ class StaminaPoolTest {
     }
 
     @Test
+    void aRaisedShieldAtZeroShareLetsTheDelayRunButRepaysNothing() {
+        StaminaPool pool = new StaminaPool(0.0);
+        pool.set(-10.0, StaminaPool.debtFloor(60.0, 1.0), 60.0, 0.75);
+        double raised = RegenerationRules.rate(25.0, true, 0.0);
+        for (int i = 0; i < 20; i++) {
+            pool.tick(TICK, raised, 60.0);
+        }
+        assertEquals(0.0, pool.delayRemaining(), EPS);
+        assertEquals(-10.0, pool.stamina(), EPS);
+        // Lowered: the full rate at once, no new delay.
+        pool.tick(TICK, RegenerationRules.rate(25.0, false, 0.0), 60.0);
+        assertEquals(-10.0 + 25.0 * TICK, pool.stamina(), EPS);
+    }
+
+    @Test
     void delayRemainderCarriesIntoRegenerationWithinOneTick() {
         StaminaPool pool = new StaminaPool(10.0);
         pool.payDiscrete(5.0, -60.0, 0.02);

@@ -8,6 +8,7 @@ import com.mahghuuuls.jass.api.StaminaPublicState;
 import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.config.ServerSettings;
 import com.mahghuuuls.jass.core.CostCalculator;
+import com.mahghuuuls.jass.core.RegenerationRules;
 import com.mahghuuuls.jass.core.StaminaPool;
 import com.mahghuuuls.jass.core.StaminaProfile;
 import net.minecraft.entity.player.EntityPlayer;
@@ -311,7 +312,10 @@ public final class ActionGate {
         return session != null && session.guardBreakTicks > 0;
     }
 
-    /** Advances regeneration and the Guard Break timer for one server tick. */
+    /**
+     * Advances regeneration and the Guard Break timer for one server tick. A raised blocking item
+     * slows regeneration while costs apply (REV-015).
+     */
     void tick(EntityPlayer player, double seconds) {
         StaminaSession session = sessions.session(player);
         if (session == null) {
@@ -321,7 +325,10 @@ public final class ActionGate {
             session.guardBreakTicks--;
         }
         StaminaProfile profile = profiles.profile(player);
-        session.pool.tick(seconds, profile.regeneration(), profile.maximum());
+        boolean raised = player.isHandActive() && ShieldRules.isBlockingItem(player.getActiveItemStack(), player)
+                && !costsSuspended(player);
+        session.pool.tick(seconds, RegenerationRules.rate(profile.regeneration(), raised,
+                ConfigModel.server().shieldRaisedRegeneration()), profile.maximum());
     }
 
     private void deny(EntityPlayer player, StaminaSession session, ResourceLocation action, String reason) {
