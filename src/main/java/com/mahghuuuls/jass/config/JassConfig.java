@@ -8,6 +8,7 @@ import net.minecraftforge.common.config.Config;
  * keys of the project's balance defaults table.
  */
 @Config(modid = Tags.MOD_ID, name = "jass/jass", category = "stamina")
+@Config.LangKey("config.jass.general")
 public final class JassConfig {
 
     private JassConfig() {

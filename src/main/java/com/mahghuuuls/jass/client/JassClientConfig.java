@@ -5,6 +5,7 @@ import net.minecraftforge.common.config.Config;
 
 /** Per-player display settings, written to {@code config/jass/jass-client.cfg}. */
 @Config(modid = Tags.MOD_ID, name = "jass/jass-client", category = "hud")
+@Config.LangKey("config.jass.client")
 public final class JassClientConfig {
 
     private JassClientConfig() {

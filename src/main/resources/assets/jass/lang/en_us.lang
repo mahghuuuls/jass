@@ -10,3 +10,5 @@ tooltip.jass.stat.regeneration=%s Stamina Regeneration
 tooltip.jass.stat.delay=%s Stamina Regeneration Delay
 tooltip.jass.stat.efficiency=%s Stamina Efficiency
 tooltip.jass.hold_shift=Hold Shift for Stamina
+config.jass.general=General
+config.jass.client=Client
