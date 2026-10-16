@@ -138,6 +138,35 @@ class StaminaPoolTest {
     }
 
     @Test
+    void aReserveIsPaidInFullEvenAfterAnotherActionWentIntoDebt() {
+        // Stamina 5, a reserve of 2 (Available 3); a jump of 10 meanwhile pays in full; the reserve is still paid.
+        StaminaPool pool = new StaminaPool(5.0);
+        pool.payDiscrete(10.0, StaminaPool.debtFloor(60.0, -1.0), 0.75);
+        assertEquals(2.0, pool.payReserve(2.0, StaminaPool.debtFloor(60.0, -1.0), 0.75), EPS);
+        assertEquals(-7.0, pool.stamina(), EPS);
+        assertFalse(pool.canStart());
+    }
+
+    @Test
+    void aReserveWithoutOtherActionsEndsAtOrAboveZeroAndStopsAtTheDebtFloor() {
+        StaminaPool pool = new StaminaPool(2.0);
+        assertEquals(2.0, pool.payReserve(2.0, -30.0, 0.75), EPS);
+        assertEquals(0.0, pool.stamina(), EPS);
+        StaminaPool floored = new StaminaPool(-29.0);
+        assertEquals(1.0, floored.payReserve(2.0, -30.0, 0.75), EPS);
+        assertEquals(-30.0, floored.stamina(), EPS);
+        assertEquals(0.0, floored.payReserve(0.0, -30.0, 0.75), EPS);
+    }
+
+    @Test
+    void payingAReservePausesRegenerationForTheTick() {
+        StaminaPool pool = new StaminaPool(10.0);
+        pool.payReserve(2.0, -30.0, 0.0);
+        pool.tick(0.05, 20.0, 60.0);
+        assertEquals(8.0, pool.stamina(), EPS);
+    }
+
+    @Test
     void freeDiscreteCostChangesNothing() {
         StaminaPool pool = new StaminaPool(30.0);
         pool.payDiscrete(0.0, -60.0, 0.75);

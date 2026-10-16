@@ -2,11 +2,15 @@ package com.mahghuuuls.jass.gameplay;
 
 import com.mahghuuuls.jass.Tags;
 import com.mahghuuuls.jass.api.JassActions;
+import com.mahghuuuls.jass.api.PreparationResult;
+import com.mahghuuuls.jass.api.SettlementOutcome;
+import com.mahghuuuls.jass.api.SettlementResult;
 import com.mahghuuuls.jass.api.StaminaChangeEvent;
 import com.mahghuuuls.jass.api.StaminaCostEvent;
 import com.mahghuuuls.jass.api.StaminaPublicState;
 import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.config.ServerSettings;
+import com.mahghuuuls.jass.core.ClaimLedger;
 import com.mahghuuuls.jass.core.CostCalculator;
 import com.mahghuuuls.jass.core.RegenerationRules;
 import com.mahghuuuls.jass.core.StaminaPool;
@@ -19,13 +23,20 @@ import net.minecraftforge.common.MinecraftForge;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.IdentityHashMap;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * The only path that changes a player's Stamina. Applies, in order: game-mode exemption and
  * integration gating (both suspend costs and denials, never regeneration), the
  * start rule, the final cost, payment with the debt floor, and denial recording. Action hooks,
  * commands, and the API all come through here so these rules cannot diverge.
+ *
+ * <p>Every action is a {@link Preparation} (REQ-088): prepared (start rule on Available Stamina, a
+ * provisional Stamina Claim before the one cost event, reconciliation after it), then settled or
+ * released. Direct actions settle at once; addon preparations settle after their effect. Claims are
+ * dropped at the end of the server tick that made them (ARC-014).
  */
 public final class ActionGate {
 
@@ -43,6 +54,9 @@ public final class ActionGate {
     }
 
     private volatile GatingSource gating = GatingSource.NONE;
+    /** Sessions with an addon claim opened this server tick, and their player; the end-of-tick sweep visits only these. */
+    private final Map<StaminaSession, EntityPlayer> claimed = new IdentityHashMap<>();
+    private long lastListenerFailureLog = Long.MIN_VALUE;
 
     /** Wires an integration that can suspend costs (Inhibited). */
     public void useGating(GatingSource source) {
@@ -73,7 +87,7 @@ public final class ActionGate {
             return true;
         }
         StaminaSession session = sessions.session(player);
-        return session != null && session.pool.canStart();
+        return session != null && available(session) > 0.0;
     }
 
     /**
@@ -94,26 +108,11 @@ public final class ActionGate {
     /** As above, telling the cost event which item and hand made the action (REQ-087). */
     public boolean tryDiscrete(EntityPlayer player, ResourceLocation action, double baseCost, CostKind kind,
             ItemStack stack, EnumHand hand) {
-        if (costsSuspended(player)) {
-            return true;
-        }
-        StaminaSession session = sessions.session(player);
-        if (refuseIfCannotStart(player, session, action)) {
+        Preparation preparation = prepare(player, action, baseCost, kind, false, stack, hand, false);
+        if (preparation.result == PreparationResult.REFUSED) {
             return false;
         }
-        StaminaProfile profile = profiles.profile(player);
-        ServerSettings settings = ConfigModel.server();
-        double factors = factors(kind, profile, settings);
-        double finalCost = participate(player, action,
-                CostCalculator.finalDiscreteCost(baseCost, factors, settings.minDiscreteCost()), stack, hand);
-        double floor = StaminaPool.debtFloor(profile.maximum(), settings.maxDebtFraction());
-        double before = session.pool.stamina();
-        session.pool.payDiscrete(finalCost, floor, profile.regenerationDelay());
-        notifyChange(player, before, session.pool.stamina(), profile.maximum(), action);
-        if (settings.debugLogging() && allowDebugLine(session, player.world.getTotalWorldTime())) {
-            LOGGER.info("JASS spent player={} action={} cost={} internal={}",
-                    player.getName(), action, format(finalCost), format(session.pool.stamina()));
-        }
+        settle(preparation);
         return true;
     }
 
@@ -133,31 +132,226 @@ public final class ActionGate {
     /** As above, telling the cost event which item and hand made the action (REQ-087). */
     public boolean drainContinuous(EntityPlayer player, ResourceLocation action, double costPerSecond, CostKind kind,
             ItemStack stack, EnumHand hand) {
-        if (costsSuspended(player)) {
-            return true;
-        }
-        StaminaSession session = sessions.session(player);
-        if (refuseIfCannotStart(player, session, action)) {
+        Preparation preparation = prepare(player, action, costPerSecond, kind, true, stack, hand, false);
+        if (preparation.result == PreparationResult.REFUSED) {
             return false;
+        }
+        return settle(preparation).getOutcome() != SettlementOutcome.PAID_STOP;
+    }
+
+    /**
+     * Prepares an action (REQ-088, REQ-089): suspended costs give FREE with no cost event; Available
+     * Stamina at or below zero gives REFUSED and records a denial; otherwise a provisional claim is
+     * opened before the one cost event, so anything a listener starts already sees it, and is then
+     * reconciled to the final cost (a continuous tick reserves at most the Available Stamina above
+     * zero). A final cost of zero gives FREE. Nothing is paid here.
+     *
+     * @param baseCost the discrete base cost, or the continuous cost per second
+     */
+    Preparation prepare(EntityPlayer player, ResourceLocation action, double baseCost, CostKind kind,
+            boolean continuous, ItemStack stack, EnumHand hand, boolean viaApi) {
+        StaminaSession session = sessions.session(player);
+        if (costsSuspended(player)) {
+            return prepared(player, action, continuous, stack, hand, viaApi, session, null, PreparationResult.FREE, 0.0);
+        }
+        if (refuseIfCannotStart(player, session, action)) {
+            return prepared(player, action, continuous, stack, hand, viaApi, session, null, PreparationResult.REFUSED, 0.0);
         }
         StaminaProfile profile = profiles.profile(player);
         ServerSettings settings = ConfigModel.server();
         double factors = factors(kind, profile, settings);
-        double before = session.pool.stamina();
-        double drained = session.pool.drainContinuous(
-                participate(player, action, CostCalculator.continuousCost(costPerSecond, factors, SECONDS_PER_TICK),
-                        stack, hand),
-                profile.regenerationDelay());
-        notifyChange(player, before, session.pool.stamina(), profile.maximum(), action);
-        if (settings.debugLogging() && allowDrainLine(session, player.world.getTotalWorldTime())) {
-            LOGGER.info("JASS drained player={} action={} amount={} internal={}",
-                    player.getName(), action, format(drained), format(session.pool.stamina()));
+        double cost = continuous ? CostCalculator.continuousCost(baseCost, factors, SECONDS_PER_TICK)
+                : CostCalculator.finalDiscreteCost(baseCost, factors, settings.minDiscreteCost());
+        ClaimLedger ledger = session.claims;
+        ClaimLedger.Claim claim = ledger.register(continuous,
+                continuous ? ClaimLedger.reserve(cost, available(session)) : cost);
+        if (viaApi) {
+            // Direct actions resolve their claim within this call (or release it below on an exception).
+            claimed.put(session, player);
         }
-        if (!session.pool.canStart()) {
-            deny(player, session, action, DenialRecord.INSUFFICIENT_STAMINA);
+        double finalCost;
+        try {
+            finalCost = participate(player, action, cost, stack, hand);
+        } catch (RuntimeException | Error e) {
+            ledger.resolve(claim, ClaimLedger.State.RELEASED);
+            throw e;
+        }
+        if (!claim.isOpen()) {
+            // A cost listener set Stamina during pricing, which invalidated the provisional claim:
+            // judge the action again on the new Available Stamina.
+            if (refuseIfCannotStart(player, session, action)) {
+                return prepared(player, action, continuous, stack, hand, viaApi, session, null,
+                        PreparationResult.REFUSED, 0.0);
+            }
+            claim = ledger.register(continuous, finalCost);
+        }
+        if (finalCost <= 0.0 && viaApi) {
+            ledger.resolve(claim, ClaimLedger.State.RELEASED);
+            return prepared(player, action, continuous, stack, hand, viaApi, session, null, PreparationResult.FREE, 0.0);
+        }
+        // A direct action with a final cost of 0 keeps its zero claim and settles through the paid
+        // path, which changes nothing but still writes its debug line, as before.
+        ledger.reconcile(claim, continuous
+                ? ClaimLedger.reserve(finalCost, ledger.availableExcept(session.pool.stamina(), claim))
+                : finalCost);
+        if (continuous && viaApi && claim.amount() <= 0.0) {
+            // Something started during pricing used the rest of the Available Stamina.
+            ledger.resolve(claim, ClaimLedger.State.RELEASED);
+            refuseIfCannotStart(player, session, action);
+            return prepared(player, action, continuous, stack, hand, viaApi, session, null,
+                    PreparationResult.REFUSED, 0.0);
+        }
+        return prepared(player, action, continuous, stack, hand, viaApi, session, claim, PreparationResult.ACCEPTED,
+                finalCost);
+    }
+
+    private Preparation prepared(EntityPlayer player, ResourceLocation action, boolean continuous, ItemStack stack,
+            EnumHand hand, boolean viaApi, StaminaSession session, ClaimLedger.Claim claim, PreparationResult result,
+            double finalCost) {
+        Preparation preparation = new Preparation(this, player, action, continuous, stack, hand, viaApi, session, claim,
+                result, finalCost);
+        if (viaApi && session != null && ConfigModel.server().debugLogging()
+                && allowDebugLine(session, player.world.getTotalWorldTime())) {
+            LOGGER.info("JASS prepare player={} action={} kind={} result={} cost={} available={}", player.getName(),
+                    action, continuous ? "continuous" : "discrete", result,
+                    format(preparation.getFinalCost()), format(available(session)));
+        }
+        return preparation;
+    }
+
+    /** Pays a preparation once (REQ-094); later calls return the first result. */
+    SettlementResult settle(Preparation preparation) {
+        if (preparation.settlement() != null) {
+            return preparation.settlement();
+        }
+        SettlementResult result = settleOnce(preparation);
+        preparation.recordSettlement(result);
+        return result;
+    }
+
+    private SettlementResult settleOnce(Preparation p) {
+        if (p.resolved() || p.result == PreparationResult.REFUSED) {
+            return Preparation.nothingPaid(SettlementOutcome.INVALIDATED, publicState(p.player));
+        }
+        if (p.result == PreparationResult.FREE) {
+            return Preparation.nothingPaid(SettlementOutcome.FREE, p.viaApi ? publicState(p.player) : null);
+        }
+        StaminaSession session = sessions.session(p.player);
+        if (session != p.session) {
+            if (p.session.claims.resolve(p.claim, ClaimLedger.State.INVALIDATED)) {
+                logClaimEnd(p, "invalidate", "session");
+            }
+            return Preparation.nothingPaid(SettlementOutcome.INVALIDATED, publicState(p.player));
+        }
+        if (!session.claims.resolve(p.claim, ClaimLedger.State.SETTLED)) {
+            return Preparation.nothingPaid(SettlementOutcome.INVALIDATED, publicState(p.player));
+        }
+        StaminaProfile profile = profiles.profile(p.player);
+        ServerSettings settings = ConfigModel.server();
+        double before = session.pool.stamina();
+        if (p.continuous && p.viaApi) {
+            session.pool.payReserve(p.claim.amount(), debtFloor(profile), profile.regenerationDelay());
+        } else if (p.continuous) {
+            session.pool.drainContinuous(p.claim.amount(), profile.regenerationDelay());
+        } else {
+            session.pool.payDiscrete(p.claim.amount(), StaminaPool.debtFloor(profile.maximum(),
+                    settings.maxDebtFraction()), profile.regenerationDelay());
+        }
+        double after = session.pool.stamina();
+        if (p.viaApi) {
+            notifyChangeGuarded(p.player, before, after, profile.maximum(), p.action);
+        } else {
+            notifyChange(p.player, before, after, profile.maximum(), p.action);
+        }
+        // PAID_STOP (addon) follows Stamina itself (REQ-094); a direct drain stops when Available
+        // Stamina is gone, which is the same as Stamina while no addon claim is open.
+        boolean stop = p.continuous && (p.viaApi ? !session.pool.canStart() : available(session) <= 0.0);
+        logSettlement(p, session, settings, before - after, stop);
+        if (stop) {
+            deny(p.player, session, p.action, DenialRecord.INSUFFICIENT_STAMINA);
+        }
+        return new SettlementResult(stop ? SettlementOutcome.PAID_STOP : SettlementOutcome.PAID, before - after,
+                new StaminaPublicState(after, profile.maximum()));
+    }
+
+    /** Drops a preparation's claim with no charge, delay, or notification; nothing after a first resolution. */
+    void release(Preparation p) {
+        if (p.resolved()) {
+            return;
+        }
+        p.markReleased();
+        if (p.claim != null && p.session.claims.resolve(p.claim, ClaimLedger.State.RELEASED)) {
+            logClaimEnd(p, "release", "addon");
+        }
+    }
+
+    /** True while settling would still pay, or still return free. Changes nothing. */
+    boolean isValid(Preparation p) {
+        if (p.resolved() || p.result == PreparationResult.REFUSED) {
             return false;
         }
-        return true;
+        if (p.result == PreparationResult.FREE) {
+            return true;
+        }
+        return p.claim.isOpen() && sessions.session(p.player) == p.session;
+    }
+
+    /** End of a server tick: claims never outlive the tick that opened them (REQ-088). */
+    void expireClaims() {
+        if (claimed.isEmpty()) {
+            return;
+        }
+        boolean debug = ConfigModel.server().debugLogging();
+        for (Map.Entry<StaminaSession, EntityPlayer> entry : claimed.entrySet()) {
+            StaminaSession session = entry.getKey();
+            EntityPlayer player = entry.getValue();
+            int expired = session.claims.resolveAll(ClaimLedger.State.EXPIRED);
+            if (expired > 0 && debug && allowDebugLine(session, player.world.getTotalWorldTime())) {
+                LOGGER.info("JASS expire player={} claims={} internal={}", player.getName(), expired,
+                        format(session.pool.stamina()));
+            }
+        }
+        claimed.clear();
+    }
+
+    /** Stamina minus open claims (REQ-089); every start rule and drain uses it. */
+    private static double available(StaminaSession session) {
+        return session.claims.available(session.pool.stamina());
+    }
+
+    private StaminaPublicState publicState(EntityPlayer player) {
+        StaminaSession session = sessions.session(player);
+        return session == null ? null : new StaminaPublicState(session.pool.stamina(), profiles.profile(player).maximum());
+    }
+
+    private void logSettlement(Preparation p, StaminaSession session, ServerSettings settings, double paid,
+            boolean stop) {
+        if (!settings.debugLogging()) {
+            return;
+        }
+        long tick = p.player.world.getTotalWorldTime();
+        if (p.viaApi) {
+            if (allowDebugLine(session, tick)) {
+                LOGGER.info("JASS settle player={} action={} outcome={} paid={} internal={}", p.player.getName(),
+                        p.action, stop ? SettlementOutcome.PAID_STOP : SettlementOutcome.PAID, format(paid),
+                        format(session.pool.stamina()));
+            }
+        } else if (p.continuous) {
+            if (allowDrainLine(session, tick)) {
+                LOGGER.info("JASS drained player={} action={} amount={} internal={}",
+                        p.player.getName(), p.action, format(paid), format(session.pool.stamina()));
+            }
+        } else if (allowDebugLine(session, tick)) {
+            LOGGER.info("JASS spent player={} action={} cost={} internal={}",
+                    p.player.getName(), p.action, format(p.claim.amount()), format(session.pool.stamina()));
+        }
+    }
+
+    private void logClaimEnd(Preparation p, String what, String cause) {
+        if (ConfigModel.server().debugLogging() && allowDebugLine(p.session, p.player.world.getTotalWorldTime())) {
+            LOGGER.info("JASS {} player={} action={} cause={} internal={}", what, p.player.getName(), p.action, cause,
+                    format(p.session.pool.stamina()));
+        }
     }
 
     /**
@@ -172,7 +366,7 @@ public final class ActionGate {
 
     /** The start rule: records a denial and returns true when the player cannot start an action. */
     private boolean refuseIfCannotStart(EntityPlayer player, StaminaSession session, ResourceLocation action) {
-        if (session.pool.canStart()) {
+        if (available(session) > 0.0) {
             return false;
         }
         deny(player, session, action, DenialRecord.INSUFFICIENT_STAMINA);
@@ -201,13 +395,22 @@ public final class ActionGate {
             return false;
         }
         StaminaProfile profile = profiles.profile(player);
+        int invalidated = session.claims.resolveAll(ClaimLedger.State.INVALIDATED);
+        if (invalidated > 0 && ConfigModel.server().debugLogging()
+                && allowDebugLine(session, player.world.getTotalWorldTime())) {
+            LOGGER.info("JASS invalidate player={} claims={} cause=set internal={}", player.getName(), invalidated,
+                    format(session.pool.stamina()));
+        }
         double before = session.pool.stamina();
         session.pool.set(value, debtFloor(profile), profile.maximum(), profile.regenerationDelay());
         notifyChange(player, before, session.pool.stamina(), profile.maximum(), cause);
         return true;
     }
 
-    /** API: removes {@code amount} directly (no start rule, no efficiency), down to the debt floor. */
+    /**
+     * API: removes {@code amount} directly (no start rule, no efficiency), down to the debt floor,
+     * but never into Stamina an open continuous claim reserves (REQ-089).
+     */
     public boolean spendDirect(EntityPlayer player, double amount, ResourceLocation cause) {
         StaminaSession session = sessions.session(player);
         if (session == null) {
@@ -215,7 +418,13 @@ public final class ActionGate {
         }
         StaminaProfile profile = profiles.profile(player);
         double before = session.pool.stamina();
-        session.pool.payDiscrete(Math.max(0.0, amount), debtFloor(profile), profile.regenerationDelay());
+        double spend = session.claims.spendable(amount, before);
+        if (spend < amount && ConfigModel.server().debugLogging()
+                && allowDebugLine(session, player.world.getTotalWorldTime())) {
+            LOGGER.info("JASS spend-floor player={} cause={} requested={} spent={} reserved={}", player.getName(), cause,
+                    format(amount), format(spend), format(session.claims.reserved()));
+        }
+        session.pool.payDiscrete(spend, debtFloor(profile), profile.regenerationDelay());
         notifyChange(player, before, session.pool.stamina(), profile.maximum(), cause);
         return true;
     }
@@ -254,6 +463,20 @@ public final class ActionGate {
         if (before != after) {
             MinecraftForge.EVENT_BUS.post(new StaminaChangeEvent(player, new StaminaPublicState(before, maximum),
                     new StaminaPublicState(after, maximum), cause));
+        }
+    }
+
+    /** As {@link #notifyChange}, for addon settlements: a failing listener cannot undo or fail the payment (REQ-094). */
+    private void notifyChangeGuarded(EntityPlayer player, double before, double after, double maximum,
+            ResourceLocation cause) {
+        try {
+            notifyChange(player, before, after, maximum, cause);
+        } catch (RuntimeException e) {
+            long now = System.currentTimeMillis();
+            if (now - lastListenerFailureLog >= 60_000L) {
+                lastListenerFailureLog = now;
+                LOGGER.warn("A Stamina change listener failed after a settled payment; the payment stays", e);
+            }
         }
     }
 

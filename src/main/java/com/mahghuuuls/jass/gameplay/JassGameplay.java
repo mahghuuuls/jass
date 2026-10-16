@@ -5,6 +5,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -111,6 +112,14 @@ public final class JassGameplay {
     @SubscribeEvent
     public void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         sessions.onLogout(event.player);
+    }
+
+    /** Drops Stamina Claims nobody settled or released this tick (REQ-088); LOWEST, so it runs after other mods' tick-end work. */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            gate.expireClaims();
+        }
     }
 
     @SubscribeEvent

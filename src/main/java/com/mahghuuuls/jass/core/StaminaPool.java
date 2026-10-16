@@ -72,6 +72,25 @@ public final class StaminaPool {
     }
 
     /**
+     * Pays a prepared continuous tick's reserve (REQ-089). The reserve was at most the Available
+     * Stamina above zero when it was made, so on its own it never makes debt; if another action that
+     * started meanwhile treated the reserve as spent and went into debt, the reserve is still paid,
+     * down to {@code debtFloor}. Pauses regeneration for the tick like a drain.
+     *
+     * @return the amount actually paid
+     */
+    public double payReserve(double amount, double debtFloor, double delaySeconds) {
+        if (amount <= 0.0) {
+            return 0.0;
+        }
+        double paid = Math.max(0.0, Math.min(amount, stamina - debtFloor));
+        stamina -= paid;
+        delayRemaining = delaySeconds;
+        drainedSinceLastTick = true;
+        return paid;
+    }
+
+    /**
      * Advances regeneration by {@code seconds}. A tick in which a Continuous Action drained
      * regenerates nothing; otherwise the delay counts down first and any time left over
      * regenerates. Positive Stamina above {@code maximum} is clamped; debt is kept.

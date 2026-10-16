@@ -1,5 +1,6 @@
 package com.mahghuuuls.jass.gameplay;
 
+import com.mahghuuuls.jass.core.ClaimLedger;
 import com.mahghuuuls.jass.core.StaminaPool;
 
 /**
@@ -10,6 +11,8 @@ import com.mahghuuuls.jass.core.StaminaPool;
 final class StaminaSession {
 
     final StaminaPool pool;
+    /** Open Stamina Claims of prepared actions (REQ-089); changed only through {@link ActionGate}. */
+    final ClaimLedger claims = new ClaimLedger();
 
     DenialRecord lastDenial;
     /** Increases on every denial; the client flashes when it sees it change. */

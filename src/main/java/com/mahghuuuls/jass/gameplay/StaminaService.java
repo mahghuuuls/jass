@@ -1,6 +1,7 @@
 package com.mahghuuuls.jass.gameplay;
 
 import com.mahghuuuls.jass.api.IStaminaService;
+import com.mahghuuuls.jass.api.PreparedStaminaAction;
 import com.mahghuuuls.jass.api.StaminaMutationResult;
 import com.mahghuuuls.jass.api.StaminaPublicState;
 import com.mahghuuuls.jass.core.StaminaProfile;
@@ -116,6 +117,28 @@ final class StaminaService implements IStaminaService {
         boolean done = before != null && gate.drainContinuous(player, action, costPerSecond,
                 movement ? CostKind.MOVEMENT : CostKind.STANDARD, stack == null ? ItemStack.EMPTY : stack, hand);
         return new StaminaMutationResult(done, costPerSecond, action, before, getState(player));
+    }
+
+    @Override
+    public PreparedStaminaAction prepareDiscreteAction(EntityPlayer player, ResourceLocation action, double baseCost,
+            boolean movement, ItemStack stack, EnumHand hand) {
+        check(player, baseCost, action);
+        if (getState(player) == null) {
+            return Preparation.refusedWithoutSession(gate, player, action, false);
+        }
+        return gate.prepare(player, action, baseCost, movement ? CostKind.MOVEMENT : CostKind.STANDARD, false,
+                stack == null ? ItemStack.EMPTY : stack, hand, true);
+    }
+
+    @Override
+    public PreparedStaminaAction prepareContinuousTick(EntityPlayer player, ResourceLocation action,
+            double costPerSecond, boolean movement, ItemStack stack, EnumHand hand) {
+        check(player, costPerSecond, action);
+        if (getState(player) == null) {
+            return Preparation.refusedWithoutSession(gate, player, action, true);
+        }
+        return gate.prepare(player, action, costPerSecond, movement ? CostKind.MOVEMENT : CostKind.STANDARD, true,
+                stack == null ? ItemStack.EMPTY : stack, hand, true);
     }
 
     private StaminaProfile profile(EntityPlayer player) {

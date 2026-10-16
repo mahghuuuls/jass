@@ -24,9 +24,17 @@ import java.util.function.Consumer;
  */
 public final class JassApi {
 
-    public static final String API_VERSION = "1.0";
+    /**
+     * The API version of the JASS that is running ("1.0", "1.1", ...). Read at run time: it is not a
+     * compile-time constant, so an addon sees the installed version, not the one it compiled against.
+     */
+    public static final String API_VERSION = runtimeVersion();
 
     private static final Logger LOGGER = LogManager.getLogger("JASS API");
+
+    private static String runtimeVersion() {
+        return "1.1";
+    }
     private static final long PROVIDER_ERROR_LOG_INTERVAL_MILLIS = 60_000L;
 
     private static IStaminaService service;
