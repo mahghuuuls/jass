@@ -11,6 +11,9 @@ package com.mahghuuuls.jass.core;
  */
 public final class StaminaPool {
 
+    /** Leftover regeneration time below this is the delay countdown's rounding residue, not real time. */
+    private static final double DELAY_RESIDUE_SECONDS = 1e-6;
+
     private double stamina;
     private double delayRemaining;
     private boolean drainedSinceLastTick;
@@ -111,6 +114,12 @@ public final class StaminaPool {
             }
             regenSeconds = seconds - delayRemaining;
             delayRemaining = 0.0;
+            if (regenSeconds < DELAY_RESIDUE_SECONDS) {
+                // 0.75 counted down in 0.05 steps leaves 0.0499999...; regenerating that residue gave
+                // a tiny positive Stamina that let a held sprint start again and restart the delay,
+                // so holding sprint at 0 stopped regeneration. Regeneration starts next tick instead.
+                return;
+            }
         }
         if (stamina < maximum) {
             stamina = Math.min(maximum, stamina + regenerationPerSecond * regenSeconds);

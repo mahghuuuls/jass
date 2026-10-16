@@ -167,6 +167,35 @@ class StaminaPoolTest {
     }
 
     @Test
+    void theDelayEndsWithoutATinyRegenerationFromRounding() {
+        // 0.75 counted down in 0.05 steps leaves a residue; it must not become a sliver of positive
+        // Stamina, or a held sprint starts again at once and restarts the delay forever.
+        StaminaPool pool = new StaminaPool(0.0);
+        pool.set(0.0, -60.0, 60.0, 0.75);
+        for (int i = 0; i < 15; i++) {
+            pool.tick(TICK, 25.0, 60.0);
+        }
+        assertEquals(0.0, pool.stamina(), 0.0);
+        assertFalse(pool.canStart());
+        assertEquals(0.0, pool.delayRemaining(), 0.0);
+        pool.tick(TICK, 25.0, 60.0);
+        assertEquals(1.25, pool.stamina(), EPS);
+    }
+
+    @Test
+    void aLongDelayAlsoEndsWithoutATinyRegeneration() {
+        // The countdown residue grows with the delay (about 4e-9 s at 3600 s).
+        StaminaPool pool = new StaminaPool(0.0);
+        pool.set(0.0, -60.0, 60.0, 3600.0);
+        for (int i = 0; i < 72000; i++) {
+            pool.tick(TICK, 25.0, 60.0);
+        }
+        assertFalse(pool.canStart());
+        pool.tick(TICK, 25.0, 60.0);
+        assertEquals(1.25, pool.stamina(), EPS);
+    }
+
+    @Test
     void freeDiscreteCostChangesNothing() {
         StaminaPool pool = new StaminaPool(30.0);
         pool.payDiscrete(0.0, -60.0, 0.75);

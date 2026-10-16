@@ -56,7 +56,7 @@ public final class ActionGate {
     private volatile GatingSource gating = GatingSource.NONE;
     /** Sessions with an addon claim opened this server tick, and their player; the end-of-tick sweep visits only these. */
     private final Map<StaminaSession, EntityPlayer> claimed = new IdentityHashMap<>();
-    private long lastListenerFailureLog = Long.MIN_VALUE;
+    private long lastListenerFailureLog = Long.MIN_VALUE / 2;
 
     /** Wires an integration that can suspend costs (Inhibited). */
     public void useGating(GatingSource source) {
