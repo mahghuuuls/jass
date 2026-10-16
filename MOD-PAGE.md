@@ -104,7 +104,7 @@ Operators can use `/stamina inspect` to see a player's stamina, stats, weight, a
 
 ## For Mod Developers
 
-JASS includes a public API for addons. Addons can read and change stamina, add their own stamina actions, add stat modifiers, supply default stamina values for their items, adjust or cancel any cost, and replace the display or the tooltip lines. See the API section of the [source repository](https://github.com/mahghuuuls/jass).
+JASS includes a public API for addons. Addons can read and change stamina, add their own stamina actions, check an action before its effect and pay only when it succeeds, add stat modifiers, supply default stamina values for their items, adjust or cancel any cost, and replace the display or the tooltip lines. See the API section of the [source repository](https://github.com/mahghuuuls/jass).
 
 ## Detailed System Reference
 

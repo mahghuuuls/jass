@@ -50,6 +50,7 @@ Public types are in `com.mahghuuuls.jass.api` (common) and `com.mahghuuuls.jass.
 - `JassApi.getStaminaService()`: read state and derived stats; spend, restore, or set stamina with a cause id; run discrete and continuous actions that follow JASS rules, with the item and hand behind them.
 - `registerItemProvider` and `registerContextualProvider`: stat modifiers from items or from player context.
 - `registerItemValueProvider`: default swing cost, bow drain, shield values, armor weight, and held weight for items without a config entry. Config entries win over providers.
+- `prepareDiscreteAction` and `prepareContinuousTick` (API 1.1): check and price an action before its effect, then `settle()` it after the effect succeeds or `release()` it if the effect fails. Until then its cost is held as a Stamina Claim, so other actions treat it as spent; a preparation not settled or released by the end of the server tick is released. A continuous tick reserves its stamina, and its settlement reports `PAID_STOP` when the action must stop. Check `JassApi.API_VERSION` before calling them: JASS 1.0 does not have them.
 - Events on the Forge bus: `StaminaCostEvent` (adjust or cancel a cost, with item and hand), `StaminaChangeEvent`.
 - Client: `ClientStaminaApi` (stamina snapshot, item values), `StaminaHudRenderEvent` (replace the HUD), `StaminaTooltipEvent` (change the tooltip lines).
 

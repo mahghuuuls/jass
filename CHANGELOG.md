@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.0
+
+### Added
+
+- API 1.1, prepared actions: an addon can check and price an action before its effect, then pay when the effect succeeds or cancel it at no cost (`prepareDiscreteAction`). Until then the cost is held as a Stamina Claim, so other actions treat it as spent.
+- API 1.1, prepared continuous ticks: an addon can reserve one tick of stamina before the tick's effect (`prepareContinuousTick`). Other drains cannot use the reserve, and the result says when the action must stop.
+- `JassApi.API_VERSION` reports the installed API version at run time.
+
+### Fixed
+
+- A failing addon stamina change listener now gets JASS's warning in the log; the payment still stays.
+- A rounding sliver at the end of the regeneration delay no longer lets a held sprint key start sprint with empty stamina and restart the delay.
+
 ## 1.0.0
 
 ### Added
