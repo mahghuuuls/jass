@@ -55,7 +55,7 @@ Each integration runs only when that mod is installed.
 - [Baubles](https://www.curseforge.com/minecraft/mc-mods/baubles): item modifiers also apply to worn baubles.
 - [Classic Bar Legacy](https://www.curseforge.com/minecraft/mc-mods/classic-bar-legacy): stamina can be shown as a Classic Bar bar instead of the JASS display. See Classic Bar Setup below.
 
-More integrations are in the separate addon [JASS Integrations](https://www.curseforge.com/minecraft/mc-mods/jass-integrations): Spartan Weaponry, Spartan Shields, Quality Tools, Quark: RotN Edition, and Just Another Food System.
+Support for more mods is in the separate addon [JASS Integrations](https://www.curseforge.com/minecraft/mc-mods/jass-integrations). See its page for the current list.
 
 [ShieldBreak](https://www.curseforge.com/minecraft/mc-mods/shieldbreak) is not meant to be used with JASS: both mods put shields on cooldown.
 
