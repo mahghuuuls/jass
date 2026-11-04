@@ -53,12 +53,12 @@ public final class StaminaProfile {
         return effectiveWeight;
     }
 
-    /** Armor weight from the active source plus held weight, before weight modifiers (REQ-095). */
+    /** Armor weight from the active source plus held weight, before weight modifiers. */
     public double weightBeforeModifiers() {
         return weightBeforeModifiers;
     }
 
-    /** Points added to the blocking item's Stability in this player's Shield Blocks; may be negative (REQ-095). */
+    /** Points added to the blocking item's Stability in this player's Shield Blocks; may be negative. */
     public double stabilityBonus() {
         return stabilityBonus;
     }

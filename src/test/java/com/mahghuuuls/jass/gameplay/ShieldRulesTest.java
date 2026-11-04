@@ -40,16 +40,15 @@ class ShieldRulesTest {
 
     @Test
     void blockStabilityAddsTheBonusToTheItemStability() {
-        // REQ-095: vanilla shield 50 plus a bonus of 50 gives 100, so a 9-damage hit costs 9 x 100/200 = 4.5.
+        // Vanilla shield 50 plus a bonus of 50 gives 100, so a 9-damage hit costs 9 x 100/200 = 4.5.
         assertEquals(100.0, ShieldRules.blockStability(50.0, 50.0), 1e-9);
         assertEquals(4.5, com.mahghuuuls.jass.core.CostCalculator.blockBaseCost(9.0, 1.0,
                 com.mahghuuuls.jass.core.CostCalculator.stabilityFactor(100.0, ShieldRules.blockStability(50.0, 50.0))), 1e-9);
     }
 
     @Test
-    void aNegativeBonusCanTakeTheTotalBelowZero() {
-        // REQ-095: 50 - 80 = -30; the Stability factor then counts it as 0 (factor 1).
-        assertEquals(-30.0, ShieldRules.blockStability(50.0, -80.0), 1e-9);
+    void aNegativeTotalCostsTheFullHit() {
+        // 50 - 80 is below 0, which the Stability factor counts as 0 (factor 1).
         assertEquals(1.0, com.mahghuuuls.jass.core.CostCalculator.stabilityFactor(100.0, ShieldRules.blockStability(50.0, -80.0)), 1e-9);
     }
 

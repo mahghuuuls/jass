@@ -14,7 +14,7 @@ public enum StatField {
     DELAY_INCREASE,
     DELAY_REDUCTION,
     EFFICIENCY,
-    /** Points added to the blocking item's Stability (Stability Bonus, REQ-095). */
+    /** Points added to the blocking item's Stability (the Stability Bonus). */
     STABILITY,
     FLAT_WEIGHT,
     WEIGHT_INCREASE,

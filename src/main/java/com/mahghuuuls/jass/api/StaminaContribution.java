@@ -4,7 +4,7 @@ package com.mahghuuuls.jass.api;
  * An immutable contribution to a player's Stamina Profile (REQ-041), from a provider. Increases and
  * reductions are fractions (0.5 = 50 percent); reductions are clamped to 0..1 when combined.
  * {@code stability}, {@code flatWeight}, {@code weightIncrease}, and {@code weightReduction} add the
- * Stability Bonus and the weight modifiers (REQ-095); since API 1.2. On JASS 1.1 or older these
+ * Stability Bonus and the weight modifiers; since API 1.2. On JASS 1.1 or older these
  * methods do not exist: calling one fails with {@code NoSuchMethodError}, and JASS then skips the
  * whole provider, so check {@link JassApi#API_VERSION} first.
  */

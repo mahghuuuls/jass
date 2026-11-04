@@ -373,7 +373,7 @@ public final class ActionGate {
         return true;
     }
 
-    /** The player's Stability Bonus (REQ-095), added to the blocking item's Stability. */
+    /** The player's Stability Bonus, added to the blocking item's Stability. */
     public double stabilityBonus(EntityPlayer player) {
         return profiles.profile(player).stabilityBonus();
     }

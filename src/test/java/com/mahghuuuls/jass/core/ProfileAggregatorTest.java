@@ -77,7 +77,7 @@ class ProfileAggregatorTest {
 
     @Test
     void weightModifiersUseTheStatFormula() {
-        // REQ-095: (20 - 5) x 1.5 x 0.8 = 18.
+        // (20 - 5) x 1.5 x 0.8 = 18.
         double weight = weightOf(20.0, Arrays.asList(
                 set(StatField.FLAT_WEIGHT, -5),
                 set(StatField.WEIGHT_INCREASE, 0.5),
@@ -120,5 +120,12 @@ class ProfileAggregatorTest {
     @Test
     void noContributionsGiveNoStabilityBonus() {
         assertEquals(0.0, ProfileAggregator.aggregate(60, 25, 0.75, 0.0, Collections.<ModifierSet>emptyList()).stabilityBonus, EPS);
+    }
+
+    @Test
+    void eachWeightReductionIsLimitedToOne() {
+        // Two reductions above 1 would multiply to a positive factor without the per-reduction limit.
+        assertEquals(0.0, weightOf(20.0, Arrays.asList(
+                set(StatField.WEIGHT_REDUCTION, 1.5), set(StatField.WEIGHT_REDUCTION, 1.5))), EPS);
     }
 }

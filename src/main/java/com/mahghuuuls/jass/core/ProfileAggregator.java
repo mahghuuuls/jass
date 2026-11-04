@@ -8,7 +8,7 @@ import java.util.List;
  * increase) x product of (1 - each reduction)}, so two penalties never turn into a bonus. Stamina
  * Efficiency is the sum of every {@code efficiency}. The Stability Bonus is the sum of every
  * {@code stability}; Effective Weight applies the same formula to the source weight with
- * {@code flat_weight}, {@code weight_increase}, and {@code weight_reduction} (REQ-095).
+ * {@code flat_weight}, {@code weight_increase}, and {@code weight_reduction}.
  */
 public final class ProfileAggregator {
 
@@ -21,9 +21,9 @@ public final class ProfileAggregator {
         public final double regeneration;
         public final double regenerationDelay;
         public final double efficiency;
-        /** Sum of every {@code stability}; may be negative (REQ-095). */
+        /** Sum of every {@code stability}; may be negative. */
         public final double stabilityBonus;
-        /** The source weight after the weight modifiers, never negative (REQ-095). */
+        /** The source weight after the weight modifiers, never negative. */
         public final double effectiveWeight;
 
         Stats(double maximum, double regeneration, double regenerationDelay, double efficiency,
@@ -38,7 +38,7 @@ public final class ProfileAggregator {
     }
 
     /**
-     * @param sourceWeight armor weight from the active weight source plus held weight (REQ-012, REQ-071),
+     * @param sourceWeight armor weight from the active weight source plus held weight,
      *                     before the weight modifiers
      */
     public static Stats aggregate(double baseMaximum, double baseRegeneration, double baseDelay, double sourceWeight,
