@@ -70,11 +70,12 @@ public final class ClaimLedger {
     }
 
     /**
-     * Sets an open claim from its final cost, once pricing is done. A continuous claim reserves at
+     * Sets an open claim from its cost: once at registration with the pre-event cost, and once after
+     * pricing with the final cost; nothing else changes it. A continuous claim reserves at
      * most the Available Stamina above 0 (never debt). A discrete claim holds the final cost and fixes
      * its Payable Amount: the final cost limited to the room the debt floor leaves after the other
      * open claims (Stamina minus the raised floor and the continuous reserves, at least 0); with an
-     * uncapped debt floor it is the final cost. Nothing else changes the Payable Amount afterwards.
+     * uncapped debt floor it is the final cost.
      */
     public void reconcile(Claim claim, double finalCost, double stamina, double debtFloor) {
         if (!claim.isOpen()) {

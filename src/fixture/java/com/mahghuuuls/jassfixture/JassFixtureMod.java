@@ -68,6 +68,8 @@ public final class JassFixtureMod {
     static final String WAND_NAME = "jassfixture-wand";
     static volatile boolean ownWand = true;
     static final ResourceLocation WAND_PROVIDER = new ResourceLocation("jassfixture", "wand");
+    /** When set, the next cast cost event settles this preparation from inside the event. */
+    static volatile PreparedStaminaAction settleOnPrice;
     /** While true, every cast cost is raised to 99 by this listener (start check card). */
     static volatile boolean raiseCasts;
     /** Cast cost events seen while counting. */
@@ -161,6 +163,14 @@ public final class JassFixtureMod {
             if (raiseCasts) {
                 event.setCost(99);
                 LOGGER.info("JASSFIXTURE cost cast raisedTo=99.00");
+            }
+            PreparedStaminaAction held = settleOnPrice;
+            if (held != null) {
+                settleOnPrice = null;
+                SettlementResult result = held.settle();
+                LOGGER.info("JASSFIXTURE prepared settleduringpricing inner settle outcome={} paid={} new={}",
+                        result.getOutcome(), format(result.getAmountPaid()),
+                        result.getNewState() == null ? "none" : format(result.getNewState().getStamina()));
             }
         }
         if (nestOnPrice && CAST.equals(event.getAction())) {
@@ -470,6 +480,19 @@ public final class JassFixtureMod {
                     settle(sender, "protectdirect", cast);
                     break;
                 }
+                case "settleduringpricing": {
+                    // Stamina 5: cast A (12) is held; while cast B (70) is priced, a listener settles A.
+                    stamina.set(player, 5, CHARGE);
+                    PreparedStaminaAction a = prepareCost(sender, player, stamina, "settleduringpricing-a", 12);
+                    settleOnPrice = a;
+                    try {
+                        cast = prepareCost(sender, player, stamina, "settleduringpricing-b", 70);
+                    } finally {
+                        settleOnPrice = null;
+                    }
+                    settle(sender, "settleduringpricing-b", cast);
+                    break;
+                }
                 case "truncate": {
                     // Stamina 5 with the default debt floor -60: a cast of 70 can pay only 65.
                     stamina.set(player, 5, CHARGE);
@@ -484,7 +507,7 @@ public final class JassFixtureMod {
                     break;
                 default:
                     throw new CommandException("/jassfixture prepared <success|fail|pending|nested|listener|set|throwlistener|logout"
-                            + "|reserve|spendfloor|protect|protectdirect|truncate|twice>");
+                            + "|reserve|spendfloor|protect|protectdirect|settleduringpricing|truncate|twice>");
             }
         }
 

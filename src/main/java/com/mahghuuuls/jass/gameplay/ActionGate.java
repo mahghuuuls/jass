@@ -31,7 +31,7 @@ import java.util.Map;
  * The only path that changes a player's Stamina. Applies, in order: game-mode exemption and
  * integration gating (both suspend costs and denials, never regeneration), the
  * start rule, the final cost, payment down to the debt floor (raised by the Payable Amounts of
- * open discrete claims, REQ-089), and denial recording. Action hooks,
+ * open discrete claims), and denial recording. Action hooks,
  * commands, and the API all come through here so these rules cannot diverge.
  *
  * <p>Every action is a {@link Preparation} (REQ-088): prepared (start rule on Available Stamina, a
@@ -165,8 +165,10 @@ public final class ActionGate {
         double cost = continuous ? CostCalculator.continuousCost(baseCost, factors, SECONDS_PER_TICK)
                 : CostCalculator.finalDiscreteCost(baseCost, factors, settings.minDiscreteCost());
         ClaimLedger ledger = session.claims;
-        ClaimLedger.Claim claim = ledger.register(continuous,
-                continuous ? ClaimLedger.reserve(cost, available(session)) : cost);
+        // Provisional claim at the pre-event cost, limited like a final one, so a payment made while
+        // the cost event runs (a settle or spend from a listener) never sees more than its real room.
+        ClaimLedger.Claim claim = ledger.register(continuous, 0.0);
+        ledger.reconcile(claim, cost, session.pool.stamina(), debtFloor(profile));
         if (viaApi) {
             // Direct actions resolve their claim within this call (or release it below on an exception).
             claimed.put(session, player);
@@ -249,8 +251,8 @@ public final class ActionGate {
         StaminaProfile profile = profiles.profile(p.player);
         ServerSettings settings = ConfigModel.server();
         double before = session.pool.stamina();
-        // The claim is resolved, so the raised floor holds only the other open discrete claims.
-        double floor = session.claims.raisedFloor(debtFloor(profile), null);
+        // The settling claim is left out of its own floor (it is also already resolved).
+        double floor = session.claims.raisedFloor(debtFloor(profile), p.claim);
         if (p.continuous && p.viaApi) {
             session.pool.payReserve(p.claim.amount(), floor, profile.regenerationDelay());
         } else if (p.continuous) {
@@ -432,7 +434,7 @@ public final class ActionGate {
     /**
      * API: removes {@code amount} directly (no start rule, no efficiency), down to the debt floor,
      * but never into Stamina an open continuous claim reserves or an open discrete claim's Payable
-     * Amount holds (REQ-089).
+     * Amount holds.
      */
     public boolean spendDirect(EntityPlayer player, double amount, ResourceLocation cause) {
         StaminaSession session = sessions.session(player);

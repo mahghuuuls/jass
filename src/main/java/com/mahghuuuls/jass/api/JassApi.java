@@ -115,12 +115,12 @@ public final class JassApi {
      * test; an addon may call it too. Since API 1.2.
      */
     public static boolean isJassBowDraw(ItemStack stack) {
-        return bowDraw(stack, isBowUseOwnedByAddon(stack));
+        return hasBowUseAction(stack) && !isBowUseOwnedByAddon(stack);
     }
 
-    /** The bow-draw test once ownership is known. */
-    static boolean bowDraw(ItemStack stack, boolean ownedByAddon) {
-        return stack != null && !stack.isEmpty() && stack.getItemUseAction() == EnumAction.BOW && !ownedByAddon;
+    /** Drawn or aimed like a bow; checked first, so providers are asked only for such stacks. */
+    static boolean hasBowUseAction(ItemStack stack) {
+        return stack != null && !stack.isEmpty() && stack.getItemUseAction() == EnumAction.BOW;
     }
 
     /**

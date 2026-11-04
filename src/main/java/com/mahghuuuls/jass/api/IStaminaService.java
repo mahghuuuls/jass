@@ -33,7 +33,7 @@ public interface IStaminaService {
     /**
      * Removes {@code amount} directly, down to the debt floor. While prepared actions are open, spend
      * stops above a continuous tick's reserve and above the room a discrete preparation's Payable
-     * Amount holds; the amount spent is {@code -result.getActualDelta()} (REQ-089). Like {@link #restore} and {@link #set},
+     * Amount holds; the amount spent is {@code -result.getActualDelta()}. Like {@link #restore} and {@link #set},
      * this is a direct mutation: no start rule, efficiency, cost event, Creative exemption, or Inhibited
      * gating. For an action the player performs, use {@link #tryDiscreteAction} or
      * {@link #drainContinuousTick}, which follow every rule.

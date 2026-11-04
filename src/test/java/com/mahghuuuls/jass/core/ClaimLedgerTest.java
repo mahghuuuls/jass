@@ -231,7 +231,7 @@ class ClaimLedgerTest {
     }
 
     @Test
-    void thePayableAmountIsTruncatedOnceAtPreparation() {
+    void thePayableAmountIsTruncatedAtPreparation() {
         // Stamina 5, debt floor -10, final cost 20: Payable Amount 15; settling leaves -10.
         StaminaPool pool = new StaminaPool(5.0);
         ClaimLedger ledger = new ClaimLedger();
@@ -317,5 +317,24 @@ class ClaimLedgerTest {
         ledger.resolve(swing, ClaimLedger.State.SETTLED);
         pool.payDiscrete(swing.payable(), ledger.raisedFloor(-30.0, null), 0.75);
         assertEquals(-30.0, pool.stamina(), 0.0);
+    }
+
+    @Test
+    void aClaimSettledWhileAnotherIsPricedStillPaysItsPayableAmount() {
+        // Stamina 5, floor -60: A (12) is open; B (70) is registered for pricing; a listener settles A.
+        StaminaPool pool = new StaminaPool(5.0);
+        ClaimLedger ledger = new ClaimLedger();
+        ClaimLedger.Claim a = ledger.register(false, 0.0);
+        ledger.reconcile(a, 12.0, pool.stamina(), -60.0);
+        ClaimLedger.Claim b = ledger.register(false, 0.0);
+        ledger.reconcile(b, 70.0, pool.stamina(), -60.0);
+        assertEquals(53.0, b.payable(), EPS);
+        ledger.resolve(a, ClaimLedger.State.SETTLED);
+        pool.payDiscrete(a.payable(), ledger.raisedFloor(-60.0, a), 0.75);
+        assertEquals(-7.0, pool.stamina(), EPS);
+        ledger.reconcile(b, 70.0, pool.stamina(), -60.0);
+        ledger.resolve(b, ClaimLedger.State.SETTLED);
+        pool.payDiscrete(b.payable(), ledger.raisedFloor(-60.0, b), 0.75);
+        assertEquals(-60.0, pool.stamina(), EPS);
     }
 }

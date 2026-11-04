@@ -35,19 +35,20 @@ class JassBowDrawTest {
     @Test
     void aVanillaBowIsABowDraw() {
         ItemStack bow = new ItemStack(Items.BOW);
-        assertTrue(JassApi.bowDraw(bow, JassApi.anyOwnsBowUse(ownerOfTheNamedBow(), bow)));
+        assertTrue(JassApi.hasBowUseAction(bow));
+        assertFalse(JassApi.anyOwnsBowUse(ownerOfTheNamedBow(), bow));
     }
 
     @Test
     void anItemWithoutTheBowUseActionIsNot() {
-        assertFalse(JassApi.bowDraw(new ItemStack(Items.IRON_SWORD), false));
+        assertFalse(JassApi.hasBowUseAction(new ItemStack(Items.IRON_SWORD)));
     }
 
     @Test
-    void anOwnedBowIsNotABowDrawForJass() {
+    void anOwnedBowStillHasTheBowUseActionButIsClaimed() {
         ItemStack owned = new ItemStack(Items.BOW);
         owned.setStackDisplayName(OWNED_NAME);
+        assertTrue(JassApi.hasBowUseAction(owned));
         assertTrue(JassApi.anyOwnsBowUse(ownerOfTheNamedBow(), owned));
-        assertFalse(JassApi.bowDraw(owned, JassApi.anyOwnsBowUse(ownerOfTheNamedBow(), owned)));
     }
 }

@@ -141,7 +141,7 @@ class ItemValueProviderTest {
     }
 
     @Test
-    void aProviderWithALinkageFailureIsSwitchedOffAndTheOthersStillAnswer() {
+    void aProviderWithALinkageFailureIsSkippedAndTheOthersStillAnswer() {
         List<RegisteredProvider<IItemValueProvider>> providers = Arrays.asList(
                 provider("linkage-bow", new IItemValueProvider() {
                     @Override
@@ -160,8 +160,13 @@ class ItemValueProviderTest {
     }
 
     @Test
-    void anEmptyOrMissingStackIsNeverOwnedOrABowDraw() {
+    void aMissingStackIsNeverOwnedOrABowDraw() {
         assertFalse(JassApi.isBowUseOwnedByAddon(null));
         assertFalse(JassApi.isJassBowDraw(null));
+    }
+
+    @Test
+    void anEmptyProviderListOwnsNothing() {
+        assertFalse(JassApi.anyOwnsBowUse(java.util.Collections.<RegisteredProvider<IItemValueProvider>>emptyList(), null));
     }
 }
