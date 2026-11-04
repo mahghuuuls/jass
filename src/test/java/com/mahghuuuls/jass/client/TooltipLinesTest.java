@@ -155,4 +155,33 @@ class TooltipLinesTest {
         assertEquals(12.0, o.get("minecraft:iron_chestplate"));
         assertEquals(1, o.size());
     }
+
+
+    @Test
+    void stabilityAndWeightLines() {
+        ItemStaminaInfo info = new ItemStaminaInfo.Builder()
+                .modifier("stability", 50, ItemInfoResolver.beneficial(StatField.STABILITY, 50))
+                .modifier("flat_weight", -3, ItemInfoResolver.beneficial(StatField.FLAT_WEIGHT, -3))
+                .modifier("weight_reduction", 0.2, ItemInfoResolver.beneficial(StatField.WEIGHT_REDUCTION, 0.2))
+                .modifier("weight_increase", 0.1, ItemInfoResolver.beneficial(StatField.WEIGHT_INCREASE, 0.1))
+                .modifier("stability", -10, ItemInfoResolver.beneficial(StatField.STABILITY, -10))
+                .build();
+        assertEquals(Arrays.asList(
+                BLUE + "tooltip.jass.stat.stability[+50]",
+                BLUE + "tooltip.jass.stat.weight[-3]",
+                BLUE + "tooltip.jass.stat.weight[-20%]",
+                RED + "tooltip.jass.stat.weight[+10%]",
+                RED + "tooltip.jass.stat.stability[-10]"), TooltipLines.lines(info, T));
+    }
+
+
+    @Test
+    void everyFieldOtherThanEfficiencyHasItsOwnLabel() {
+        for (StatField field : StatField.values()) {
+            String text = TooltipLines.modifierText(new ItemStaminaInfo.Modifier(field.configName(), 1, true), T);
+            if (field != StatField.EFFICIENCY) {
+                assertFalse(text.startsWith("tooltip.jass.stat.efficiency"), field + " falls back to the efficiency label");
+            }
+        }
+    }
 }

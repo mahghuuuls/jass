@@ -99,17 +99,18 @@ public final class ShieldHook {
         String name = ItemKeys.registryName(shield);
         ServerSettings settings = ConfigModel.server();
         double stability = ItemValueLookup.shieldStability(shield);
+        double stabilityBonus = gate.stabilityBonus(player);
         double baseCost = CostCalculator.blockBaseCost(amount, settings.blockStaminaPerDamage(),
-                CostCalculator.stabilityFactor(settings.stabilityScale(), stability));
+                CostCalculator.stabilityFactor(settings.stabilityScale(), ShieldRules.blockStability(stability, stabilityBonus)));
         ActionGate.BlockOutcome outcome = gate.payBlock(player, baseCost, shield, player.getActiveHand());
         double fraction = kind == ShieldRules.BlockKind.MELEE
                 ? ItemValueLookup.shieldMeleeBlock(shield)
                 : ItemValueLookup.shieldProjectileBlock(shield);
         double leaked = ShieldRules.leakedDamage(amount, fraction);
         if (debug) {
-            LOGGER.info("JASS block player={} kind={} outcome={} amount={} item={} stability={} baseCost={} fraction={} leaked={}",
+            LOGGER.info("JASS block player={} kind={} outcome={} amount={} item={} stability={} stabilityBonus={} baseCost={} fraction={} leaked={}",
                     player.getName(), kind.name().toLowerCase(Locale.ROOT), outcome.name().toLowerCase(Locale.ROOT),
-                    format(amount), name, format(stability), format(baseCost), format(fraction), format(leaked));
+                    format(amount), name, format(stability), format(stabilityBonus), format(baseCost), format(fraction), format(leaked));
         }
         if (outcome == ActionGate.BlockOutcome.REFUSED) {
             return false;

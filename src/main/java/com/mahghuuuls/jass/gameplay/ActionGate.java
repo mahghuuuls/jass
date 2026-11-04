@@ -373,6 +373,11 @@ public final class ActionGate {
         return true;
     }
 
+    /** The player's Stability Bonus (REQ-095), added to the blocking item's Stability. */
+    public double stabilityBonus(EntityPlayer player) {
+        return profiles.profile(player).stabilityBonus();
+    }
+
     /** The player's current state, or {@code null} for players without a session. */
     public StaminaReadout read(EntityPlayer player) {
         StaminaSession session = sessions.session(player);

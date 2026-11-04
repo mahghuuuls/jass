@@ -14,20 +14,14 @@ public final class StaminaProfile {
     private final String weightSource;
     private final double heldWeight;
     private final List<String> contributions;
+    private final double weightBeforeModifiers;
+    private final double stabilityBonus;
 
     public StaminaProfile(double maximum, double regeneration, double regenerationDelay, double efficiency,
-            double effectiveWeight, String weightSource) {
-        this(maximum, regeneration, regenerationDelay, efficiency, effectiveWeight, weightSource,
-                Collections.<String>emptyList());
-    }
-
-    public StaminaProfile(double maximum, double regeneration, double regenerationDelay, double efficiency,
-            double effectiveWeight, String weightSource, List<String> contributions) {
-        this(maximum, regeneration, regenerationDelay, efficiency, effectiveWeight, weightSource, 0.0, contributions);
-    }
-
-    public StaminaProfile(double maximum, double regeneration, double regenerationDelay, double efficiency,
-            double effectiveWeight, String weightSource, double heldWeight, List<String> contributions) {
+            double effectiveWeight, String weightSource, double heldWeight, List<String> contributions,
+            double weightBeforeModifiers, double stabilityBonus) {
+        this.weightBeforeModifiers = weightBeforeModifiers;
+        this.stabilityBonus = stabilityBonus;
         this.heldWeight = heldWeight;
         this.contributions = Collections.unmodifiableList(contributions);
         this.maximum = maximum;
@@ -54,12 +48,22 @@ public final class StaminaProfile {
         return efficiency;
     }
 
-    /** Weight of worn armor plus held items; multiplies Movement Action costs. */
+    /** Weight of worn armor plus held items, after weight modifiers; multiplies Movement Action costs. */
     public double effectiveWeight() {
         return effectiveWeight;
     }
 
-    /** The part of {@link #effectiveWeight()} that comes from the items in both hands. */
+    /** Armor weight from the active source plus held weight, before weight modifiers (REQ-095). */
+    public double weightBeforeModifiers() {
+        return weightBeforeModifiers;
+    }
+
+    /** Points added to the blocking item's Stability in this player's Shield Blocks; may be negative (REQ-095). */
+    public double stabilityBonus() {
+        return stabilityBonus;
+    }
+
+    /** The part of {@link #weightBeforeModifiers()} that comes from the items in both hands. */
     public double heldWeight() {
         return heldWeight;
     }

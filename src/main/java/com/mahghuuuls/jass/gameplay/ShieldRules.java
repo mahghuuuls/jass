@@ -26,6 +26,11 @@ public final class ShieldRules {
     }
 
     /** Damage a block lets through: the part the blocking item does not stop. */
+    /** The Stability a Shield Block's cost uses: the blocking item's Stability plus the player's Stability Bonus (REQ-095). */
+    public static double blockStability(double itemStability, double stabilityBonus) {
+        return itemStability + stabilityBonus;
+    }
+
     public static double leakedDamage(double incomingDamage, double blockFraction) {
         double stopped = Math.min(1.0, Math.max(0.0, blockFraction));
         return Math.max(0.0, incomingDamage) * (1.0 - stopped);

@@ -58,6 +58,8 @@ public final class JassFixtureMod {
     /** Channel cost per second: 2 per tick before efficiency. */
     static final double CHANNEL_COST = 40;
     static final ResourceLocation STICK_PROVIDER = new ResourceLocation("jassfixture", "stick");
+    /** A feather in any active slot: Stability Bonus 25 and 2 less weight. */
+    static final ResourceLocation FEATHER_PROVIDER = new ResourceLocation("jassfixture", "feather");
     static final ResourceLocation THROWING_PROVIDER = new ResourceLocation("jassfixture", "throwing");
 
     static volatile boolean halveMelee;
@@ -76,6 +78,8 @@ public final class JassFixtureMod {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        JassApi.registerItemProvider(FEATHER_PROVIDER, Items.FEATHER,
+                (player, context) -> StaminaContribution.builder().stability(25).flatWeight(-2).build());
         JassApi.registerItemProvider(STICK_PROVIDER, Items.STICK,
                 (player, context) -> StaminaContribution.builder().flatMaximum(10).build());
         JassApi.registerContextualProvider(THROWING_PROVIDER, player -> {

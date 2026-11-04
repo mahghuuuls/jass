@@ -88,6 +88,12 @@ final class TooltipLines {
             case DELAY_INCREASE:
             case DELAY_REDUCTION:
                 return "delay";
+            case STABILITY:
+                return "stability";
+            case FLAT_WEIGHT:
+            case WEIGHT_INCREASE:
+            case WEIGHT_REDUCTION:
+                return "weight";
             default:
                 return "efficiency";
         }

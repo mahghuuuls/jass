@@ -33,7 +33,7 @@ public final class JassApi {
     private static final Logger LOGGER = LogManager.getLogger("JASS API");
 
     private static String runtimeVersion() {
-        return "1.1";
+        return "1.2";
     }
     private static final long PROVIDER_ERROR_LOG_INTERVAL_MILLIS = 60_000L;
 

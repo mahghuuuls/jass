@@ -78,13 +78,15 @@ final class ItemInfoResolver {
         return b.build();
     }
 
-    /** True when the line helps the player: more Maximum Stamina, Regeneration, or Efficiency, or less delay. */
+    /** True when the line helps the player: more Maximum Stamina, Regeneration, Efficiency, or Stability, or less delay or weight. */
     static boolean beneficial(StatField field, double value) {
         switch (field) {
             case MAXIMUM_REDUCTION:
             case REGENERATION_REDUCTION:
             case FLAT_DELAY:
             case DELAY_INCREASE:
+            case FLAT_WEIGHT:
+            case WEIGHT_INCREASE:
                 return value < 0.0;
             default:
                 return value > 0.0;

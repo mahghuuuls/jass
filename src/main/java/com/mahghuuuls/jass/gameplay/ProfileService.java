@@ -95,15 +95,15 @@ public final class ProfileService {
 
     private StaminaProfile build(EntityPlayer player, ServerSettings settings) {
         List<ModifierSet> contributions = contributions(player, settings);
+        WeightResolver.Resolved weight = weights.resolve(player);
         ProfileAggregator.Stats stats = ProfileAggregator.aggregate(settings.maxStamina(),
-                settings.staminaRegeneration(), settings.regenerationDelay(), contributions);
+                settings.staminaRegeneration(), settings.regenerationDelay(), weight.weight, contributions);
         List<String> explanations = new ArrayList<>();
         for (ModifierSet set : contributions) {
             explanations.add(set.source() + " " + set.describeValues());
         }
-        WeightResolver.Resolved weight = weights.resolve(player);
         return new StaminaProfile(stats.maximum, stats.regeneration, stats.regenerationDelay, stats.efficiency,
-                weight.weight, weight.source, weight.held, explanations);
+                stats.effectiveWeight, weight.source, weight.held, explanations, weight.weight, stats.stabilityBonus);
     }
 
     /** Item rules and item providers for every stack in an active slot, then contextual providers. */
@@ -150,6 +150,11 @@ public final class ProfileService {
         if (c == null || c.isEmpty()) {
             return;
         }
+        contributions.add(toModifierSet(c, source));
+    }
+
+    /** The provider contribution as modifier fields; a field at 0 is left out. */
+    static ModifierSet toModifierSet(StaminaContribution c, String source) {
         Map<StatField, Double> values = new EnumMap<>(StatField.class);
         put(values, StatField.FLAT_MAXIMUM, c.getFlatMaximum());
         put(values, StatField.MAXIMUM_INCREASE, c.getMaximumIncrease());
@@ -161,7 +166,11 @@ public final class ProfileService {
         put(values, StatField.DELAY_INCREASE, c.getDelayIncrease());
         put(values, StatField.DELAY_REDUCTION, c.getDelayReduction());
         put(values, StatField.EFFICIENCY, c.getEfficiency());
-        contributions.add(new ModifierSet(values, source));
+        put(values, StatField.STABILITY, c.getStability());
+        put(values, StatField.FLAT_WEIGHT, c.getFlatWeight());
+        put(values, StatField.WEIGHT_INCREASE, c.getWeightIncrease());
+        put(values, StatField.WEIGHT_REDUCTION, c.getWeightReduction());
+        return new ModifierSet(values, source);
     }
 
     private static void put(Map<StatField, Double> values, StatField field, double value) {

@@ -24,7 +24,7 @@ public interface IStaminaService {
 
     double getStaminaEfficiency(EntityPlayer player);
 
-    /** Effective Weight: worn armor (from the active weight source) plus the items in both hands. */
+    /** Effective Weight: worn armor (from the active weight source) plus the items in both hands, after weight modifiers (API 1.2). */
     double getEffectiveWeight(EntityPlayer player);
 
     /** True while Inhibited gating suspends this player's Stamina costs (REQ-084). */

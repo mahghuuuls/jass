@@ -51,4 +51,26 @@ class ItemModifierRulesTest {
         ItemModifierRules rules = ItemModifierRules.parse("item_stamina_modifiers", new String[0]);
         assertNull(rules.ruleFor("minecraft:stick", 0));
     }
+
+
+    @Test
+    void parsesTheStabilityAndWeightFields() {
+        ItemModifierRules rules = ItemModifierRules.parse("item_stamina_modifiers", new String[]{
+                "minecraft:iron_chestplate=stability:50;flat_weight:-5;weight_increase:0.5;weight_reduction:0.2"});
+        ModifierSet set = rules.ruleFor("minecraft:iron_chestplate", ItemValueRules.ANY_METADATA);
+        assertNotNull(set);
+        assertEquals(50.0, set.get(StatField.STABILITY), EPS);
+        assertEquals(-5.0, set.get(StatField.FLAT_WEIGHT), EPS);
+        assertEquals(0.5, set.get(StatField.WEIGHT_INCREASE), EPS);
+        assertEquals(0.2, set.get(StatField.WEIGHT_REDUCTION), EPS);
+        assertTrue(rules.warnings().isEmpty());
+    }
+
+    @Test
+    void weightReductionOutsideZeroToOneIsRejected() {
+        ItemModifierRules rules = ItemModifierRules.parse("item_stamina_modifiers",
+                new String[]{"minecraft:iron_chestplate=weight_reduction:1.5"});
+        assertNull(rules.ruleFor("minecraft:iron_chestplate", ItemValueRules.ANY_METADATA));
+        assertEquals(1, rules.warnings().size());
+    }
 }

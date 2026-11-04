@@ -112,6 +112,8 @@ public final class StaminaCommand extends CommandBase {
                 + " efficiency=" + format(profile.efficiency())
                 + " weight=" + format(profile.effectiveWeight())
                 + " heldWeight=" + format(profile.heldWeight())
+                + " weightBeforeModifiers=" + format(profile.weightBeforeModifiers())
+                + " stabilityBonus=" + format(profile.stabilityBonus())
                 + " weightSource=" + profile.weightSource()
                 + " spending=" + (readout.exempt() ? "exempt" : readout.gated() ? "gated" : "active")
                 + " guardBreak=" + format(readout.guardBreakTicks() / 20.0)

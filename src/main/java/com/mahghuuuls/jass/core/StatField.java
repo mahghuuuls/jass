@@ -13,7 +13,12 @@ public enum StatField {
     FLAT_DELAY,
     DELAY_INCREASE,
     DELAY_REDUCTION,
-    EFFICIENCY;
+    EFFICIENCY,
+    /** Points added to the blocking item's Stability (Stability Bonus, REQ-095). */
+    STABILITY,
+    FLAT_WEIGHT,
+    WEIGHT_INCREASE,
+    WEIGHT_REDUCTION;
 
     /** The name used in configuration lines, such as {@code flat_maximum}. */
     public String configName() {
@@ -22,7 +27,8 @@ public enum StatField {
 
     /** True for the reduction fields, whose values must be fractions from 0 to 1. */
     public boolean isReduction() {
-        return this == MAXIMUM_REDUCTION || this == REGENERATION_REDUCTION || this == DELAY_REDUCTION;
+        return this == MAXIMUM_REDUCTION || this == REGENERATION_REDUCTION || this == DELAY_REDUCTION
+                || this == WEIGHT_REDUCTION;
     }
 
     /** The field with this configuration name, or {@code null}. */

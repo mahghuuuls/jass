@@ -66,4 +66,13 @@ class StaminaApiTest {
         assertThrows(IllegalStateException.class, () -> JassApi.registerContextualProvider(
                 new ResourceLocation("testaddon", "late"), player -> StaminaContribution.EMPTY));
     }
+
+
+    @Test
+    void eachNewFieldAloneMakesAContributionNonEmpty() {
+        assertFalse(StaminaContribution.builder().stability(1).build().isEmpty());
+        assertFalse(StaminaContribution.builder().flatWeight(-1).build().isEmpty());
+        assertFalse(StaminaContribution.builder().weightIncrease(0.1).build().isEmpty());
+        assertFalse(StaminaContribution.builder().weightReduction(0.1).build().isEmpty());
+    }
 }

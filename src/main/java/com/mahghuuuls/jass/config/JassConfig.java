@@ -212,7 +212,8 @@ public final class JassConfig {
             "Item Stamina Modifiers, one rule per line: namespace:item[@metadata or @*]=field:value;field:value",
             "A rule applies while the item is worn in an armor slot, held in either hand, or worn in a bauble slot (Baubles or Bubbles).",
             "Fields: flat_maximum, maximum_increase, maximum_reduction, flat_regeneration, regeneration_increase,",
-            "regeneration_reduction, flat_delay, delay_increase, delay_reduction, efficiency.",
+            "regeneration_reduction, flat_delay, delay_increase, delay_reduction, efficiency,",
+            "stability (points added to the blocking item's Stability), flat_weight, weight_increase, weight_reduction.",
             "Increases and reductions are fractions (0.5 = 50 percent); reductions must be from 0 to 1.",
             "Example: minecraft:golden_boots=flat_regeneration:25;delay_reduction:0.5"})
     public static String[] itemStaminaModifiers = {};
