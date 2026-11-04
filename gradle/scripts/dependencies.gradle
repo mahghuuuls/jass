@@ -41,10 +41,10 @@ dependencies {
 
     // Agent Diagnostics Toolkit, development runtime only; never packaged or declared.
     // The jar is not committed. Place it in libs/ before runClient or runServer:
-    //   agenttesttoolkit-1.2.0.jar, 248481 bytes
-    //   sha256 fbb9f55a731059e0b82b548bc2ea721e285268fafa30d1a469df9f1754bf5aa7
-    if (file('libs/agenttesttoolkit-1.2.0.jar').exists()) {
-        runtimeOnly rfg.deobf(files('libs/agenttesttoolkit-1.2.0.jar'))
+    //   agenttesttoolkit-1.5.0.jar, 513446 bytes
+    //   sha256 1b11c8e5ec088c08aaacd5e59f3654c498e3c62aaf59e3508907c64ca253702d
+    if (file('libs/agenttesttoolkit-1.5.0.jar').exists()) {
+        runtimeOnly rfg.deobf(files('libs/agenttesttoolkit-1.5.0.jar'))
     }
 
     // Baubles API 1.5.2 for compat.baubles: compile against it (never packaged; optional at runtime,
