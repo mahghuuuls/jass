@@ -14,6 +14,17 @@ public interface PreparedStaminaAction {
     /** The final cost after efficiency, weight, minimum cost, and cost listeners; 0 unless accepted. For a continuous tick, the reserved debit. */
     double getFinalCost();
 
+    /**
+     * What settling pays: for a Discrete Action its Payable Amount, the final cost limited once at
+     * preparation to what the debt floor leaves after the other open claims, which no other ordinary
+     * payment can take while this one is open; for a continuous tick, its reserve. 0 unless accepted.
+     * Since API 1.2: on JASS 1.1 or older the call fails with {@code NoSuchMethodError}, so check
+     * {@link JassApi#API_VERSION} first.
+     */
+    default double getPayableAmount() {
+        return getFinalCost();
+    }
+
     /** True while settling would still pay (or, for a free preparation, still return free). Changes nothing. */
     boolean isValid();
 

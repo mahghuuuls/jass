@@ -30,7 +30,8 @@ import java.util.Map;
 /**
  * The only path that changes a player's Stamina. Applies, in order: game-mode exemption and
  * integration gating (both suspend costs and denials, never regeneration), the
- * start rule, the final cost, payment with the debt floor, and denial recording. Action hooks,
+ * start rule, the final cost, payment down to the debt floor (raised by the Payable Amounts of
+ * open discrete claims, REQ-089), and denial recording. Action hooks,
  * commands, and the API all come through here so these rules cannot diverge.
  *
  * <p>Every action is a {@link Preparation} (REQ-088): prepared (start rule on Available Stamina, a
@@ -144,7 +145,8 @@ public final class ActionGate {
      * Stamina at or below zero gives REFUSED and records a denial; otherwise a provisional claim is
      * opened before the one cost event, so anything a listener starts already sees it, and is then
      * reconciled to the final cost (a continuous tick reserves at most the Available Stamina above
-     * zero). A final cost of zero gives FREE. Nothing is paid here.
+     * zero; a discrete claim fixes its Payable Amount). A final cost of zero gives FREE. Nothing is
+     * paid here.
      *
      * @param baseCost the discrete base cost, or the continuous cost per second
      */
@@ -191,9 +193,7 @@ public final class ActionGate {
         }
         // A direct action with a final cost of 0 keeps its zero claim and settles through the paid
         // path, which changes nothing but still writes its debug line, as before.
-        ledger.reconcile(claim, continuous
-                ? ClaimLedger.reserve(finalCost, ledger.availableExcept(session.pool.stamina(), claim))
-                : finalCost);
+        ledger.reconcile(claim, finalCost, session.pool.stamina(), debtFloor(profile));
         if (continuous && viaApi && claim.amount() <= 0.0) {
             // Something started during pricing used the rest of the Available Stamina.
             ledger.resolve(claim, ClaimLedger.State.RELEASED);
@@ -249,13 +249,14 @@ public final class ActionGate {
         StaminaProfile profile = profiles.profile(p.player);
         ServerSettings settings = ConfigModel.server();
         double before = session.pool.stamina();
+        // The claim is resolved, so the raised floor holds only the other open discrete claims.
+        double floor = session.claims.raisedFloor(debtFloor(profile), null);
         if (p.continuous && p.viaApi) {
-            session.pool.payReserve(p.claim.amount(), debtFloor(profile), profile.regenerationDelay());
+            session.pool.payReserve(p.claim.amount(), floor, profile.regenerationDelay());
         } else if (p.continuous) {
             session.pool.drainContinuous(p.claim.amount(), profile.regenerationDelay());
         } else {
-            session.pool.payDiscrete(p.claim.amount(), StaminaPool.debtFloor(profile.maximum(),
-                    settings.maxDebtFraction()), profile.regenerationDelay());
+            session.pool.payDiscrete(p.claim.payable(), floor, profile.regenerationDelay());
         }
         double after = session.pool.stamina();
         if (p.viaApi) {
@@ -359,9 +360,12 @@ public final class ActionGate {
      * the player cannot start an action now. Never charges anything.
      */
     public void reportRefusedAttempt(EntityPlayer player, ResourceLocation action) {
-        if (!costsSuspended(player)) {
-            refuseIfCannotStart(player, sessions.session(player), action);
-        }
+        mayStartOrRefuse(player, sessions.session(player), action);
+    }
+
+    /** Suspended costs, else the start rule, which records a denial when it refuses; true if the action may start. */
+    private boolean mayStartOrRefuse(EntityPlayer player, StaminaSession session, ResourceLocation action) {
+        return costsSuspended(player) || !refuseIfCannotStart(player, session, action);
     }
 
     /** The start rule: records a denial and returns true when the player cannot start an action. */
@@ -371,6 +375,19 @@ public final class ActionGate {
         }
         deny(player, session, action, DenialRecord.INSUFFICIENT_STAMINA);
         return true;
+    }
+
+    /**
+     * The start check without a cost: the exemption, gating, and start rule of {@link #prepare},
+     * ending before the cost event. A refusal records the denial, which also drives the refusal
+     * feedback; nothing is priced, claimed, or paid.
+     *
+     * @return {@code true} if the action may start now; {@code false} without a session or when refused
+     */
+    public boolean checkStart(EntityPlayer player, ResourceLocation action) {
+        StaminaSession session = sessions.session(player);
+        // Without a session a preparation is refused too; costsSuspended would call it exempt.
+        return session != null && mayStartOrRefuse(player, session, action);
     }
 
     /** The player's Stability Bonus, added to the blocking item's Stability. */
@@ -414,7 +431,8 @@ public final class ActionGate {
 
     /**
      * API: removes {@code amount} directly (no start rule, no efficiency), down to the debt floor,
-     * but never into Stamina an open continuous claim reserves (REQ-089).
+     * but never into Stamina an open continuous claim reserves or an open discrete claim's Payable
+     * Amount holds (REQ-089).
      */
     public boolean spendDirect(EntityPlayer player, double amount, ResourceLocation cause) {
         StaminaSession session = sessions.session(player);
@@ -423,13 +441,15 @@ public final class ActionGate {
         }
         StaminaProfile profile = profiles.profile(player);
         double before = session.pool.stamina();
-        double spend = session.claims.spendable(amount, before);
-        if (spend < amount && ConfigModel.server().debugLogging()
+        double floor = session.claims.raisedFloor(debtFloor(profile), null);
+        session.pool.payDiscrete(session.claims.spendable(amount, before, debtFloor(profile)), floor,
+                profile.regenerationDelay());
+        double spent = before - session.pool.stamina();
+        if (spent < amount && !session.claims.isEmpty() && ConfigModel.server().debugLogging()
                 && allowDebugLine(session, player.world.getTotalWorldTime())) {
-            LOGGER.info("JASS spend-floor player={} cause={} requested={} spent={} reserved={}", player.getName(), cause,
-                    format(amount), format(spend), format(session.claims.reserved()));
+            LOGGER.info("JASS spend-floor player={} cause={} requested={} spent={} reserved={} floor={}", player.getName(),
+                    cause, format(amount), format(spent), format(session.claims.reserved()), format(floor));
         }
-        session.pool.payDiscrete(spend, debtFloor(profile), profile.regenerationDelay());
         notifyChange(player, before, session.pool.stamina(), profile.maximum(), cause);
         return true;
     }

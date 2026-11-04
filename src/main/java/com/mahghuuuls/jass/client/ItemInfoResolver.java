@@ -23,7 +23,7 @@ import net.minecraftforge.common.ISpecialArmor;
  * Which Stamina values an item stack shows (REQ-058), read from the server's tables with the same
  * item tests the server uses, and the server's order for each value (configuration, then addon
  * providers, then the default; REQ-086): melee weapons have an attack damage attribute in the main
- * hand (or a configured or provided melee cost, since every swing is charged), bow-draw items are drawn like a bow right now (the
+ * hand (or a configured or provided melee cost, since every swing is charged), bow-draw items are treated by JASS as a bow draw right now (not addon-owned) (the
  * server drains only those), blocking items use the block action or are shields, armor is worn in
  * an armor slot, and any item can have a held weight (REV-014).
  */
@@ -48,7 +48,7 @@ final class ItemInfoResolver {
         if (hasAttackDamage(stack) || !Double.isNaN(configuredMelee) || !Double.isNaN(providedMelee)) {
             b.swingCost(ValueOrder.first(configuredMelee, providedMelee, t.defaultMeleeCost()));
         }
-        if (stack.getItemUseAction() == EnumAction.BOW) {
+        if (JassApi.isJassBowDraw(stack)) {
             b.drawPerSecond(pick(t.configuredBowDrawCost(name, metadata), ItemValueKind.BOW_DRAW_COST, stack,
                     t.defaultBowDrawCost()));
         }

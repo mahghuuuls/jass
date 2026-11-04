@@ -141,6 +141,12 @@ final class StaminaService implements IStaminaService {
                 stack == null ? ItemStack.EMPTY : stack, hand, true);
     }
 
+    @Override
+    public boolean checkActionStart(EntityPlayer player, ResourceLocation action, ItemStack stack, EnumHand hand) {
+        check(player, 0.0, action);
+        return getState(player) != null && gate.checkStart(player, action);
+    }
+
     private StaminaProfile profile(EntityPlayer player) {
         serverSide(player);
         StaminaReadout readout = gate.read(player);

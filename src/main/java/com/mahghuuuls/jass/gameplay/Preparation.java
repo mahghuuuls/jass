@@ -68,6 +68,11 @@ final class Preparation implements PreparedStaminaAction {
     }
 
     @Override
+    public double getPayableAmount() {
+        return result == PreparationResult.ACCEPTED ? (claim != null ? claim.payable() : finalCost) : 0.0;
+    }
+
+    @Override
     public boolean isValid() {
         return gate.isValid(this);
     }

@@ -1,5 +1,6 @@
 package com.mahghuuuls.jass.client;
 
+import com.mahghuuuls.jass.api.JassApi;
 import com.mahghuuuls.jass.core.SprintRules;
 import com.mahghuuuls.jass.network.AirSwingMessage;
 import com.mahghuuuls.jass.network.JassNetwork;
@@ -167,7 +168,7 @@ public final class ClientActionGuard {
     }
 
     /**
-     * At zero Stamina a bow-draw item (use action bow drawing, as on the server) does not start a
+     * At zero Stamina a bow-draw item (the same test as the server: bow use action, not addon-owned) does not start a
      * draw locally. Vanilla has already sent the use packet; the server refuses it and records the
      * denial (once per held right click), which drives the flash. Without this the client would
      * show a draw the server never started (the server refuses the right click too, answering FAIL, so it
@@ -180,7 +181,7 @@ public final class ClientActionGuard {
         if (!event.getWorld().isRemote || stack.isEmpty()) {
             return;
         }
-        boolean refusedDraw = !ClientStaminaState.canSpend() && stack.getItemUseAction() == EnumAction.BOW;
+        boolean refusedDraw = !ClientStaminaState.canSpend() && JassApi.isJassBowDraw(stack);
         // During Guard Break no blocking item may be raised; the server refuses it as well.
         boolean refusedShield = ClientStaminaState.guardBroken()
                 && (stack.getItemUseAction() == EnumAction.BLOCK || stack.getItem().isShield(stack, event.getEntityPlayer()));

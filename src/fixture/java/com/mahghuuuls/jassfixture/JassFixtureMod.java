@@ -64,6 +64,14 @@ public final class JassFixtureMod {
 
     static volatile boolean halveMelee;
     static volatile boolean throwInProvider;
+    /** The test wand: a bow renamed to this owns its bow-action use while {@link #ownWand} is on. */
+    static final String WAND_NAME = "jassfixture-wand";
+    static volatile boolean ownWand = true;
+    static final ResourceLocation WAND_PROVIDER = new ResourceLocation("jassfixture", "wand");
+    /** While true, every cast cost is raised to 99 by this listener (start check card). */
+    static volatile boolean raiseCasts;
+    /** Cast cost events seen while counting. */
+    static volatile int castCostEvents;
     /** One-shot: the next pricing of a cast starts another action from inside the cost event. */
     static volatile boolean nestOnPrice;
     /** One-shot: the next change notification for a cast throws (a broken listener). */
@@ -78,6 +86,12 @@ public final class JassFixtureMod {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        JassApi.registerItemValueProvider(WAND_PROVIDER, new IItemValueProvider() {
+            @Override
+            public boolean ownsBowUse(ItemStack stack) {
+                return ownWand && stack.hasDisplayName() && WAND_NAME.equals(stack.getDisplayName());
+            }
+        });
         JassApi.registerItemProvider(FEATHER_PROVIDER, Items.FEATHER,
                 (player, context) -> StaminaContribution.builder().stability(25).flatWeight(-2).build());
         JassApi.registerItemProvider(STICK_PROVIDER, Items.STICK,
@@ -142,7 +156,12 @@ public final class JassFixtureMod {
     @SubscribeEvent
     public void onCost(StaminaCostEvent event) {
         if (CAST.equals(event.getAction())) {
+            castCostEvents++;
             LOGGER.info("JASSFIXTURE cost cast player={} cost={}", event.getPlayer().getName(), format(event.getCost()));
+            if (raiseCasts) {
+                event.setCost(99);
+                LOGGER.info("JASSFIXTURE cost cast raisedTo=99.00");
+            }
         }
         if (nestOnPrice && CAST.equals(event.getAction())) {
             nestOnPrice = false;
@@ -288,7 +307,7 @@ public final class JassFixtureMod {
         public String getUsage(ICommandSender sender) {
             return "/jassfixture <spend|discrete|halve on|off|throw on|off|gated|lateregister|state"
                     + "|prepared success|fail|pending|nested|listener|set|throwlistener|logout|reserve|spendfloor|twice"
-                    + "|channel on|off>";
+                    + "|protect|protectdirect|truncate|check [raise]|wand on|off|channel on|off>";
         }
 
         @Override
@@ -332,6 +351,27 @@ public final class JassFixtureMod {
                 case "prepared":
                     prepared(sender, player, stamina, on);
                     break;
+                case "wand":
+                    if (!"on".equals(on) && !"off".equals(on)) {
+                        throw new CommandException("/jassfixture wand <on|off>");
+                    }
+                    ownWand = "on".equals(on);
+                    log(sender, "wand ownership=" + ownWand);
+                    break;
+                case "check": {
+                    // The start check: "check" as is, "check raise" with a listener raising every cast cost.
+                    raiseCasts = "raise".equals(on);
+                    castCostEvents = 0;
+                    try {
+                        String before = state(player, stamina);
+                        boolean mayStart = stamina.checkActionStart(player, CAST, ItemStack.EMPTY, null);
+                        log(sender, "check mayStart=" + mayStart + " castCostEvents=" + castCostEvents + " before " + before
+                                + " after " + state(player, stamina) + " raise=" + raiseCasts);
+                    } finally {
+                        raiseCasts = false;
+                    }
+                    break;
+                }
                 case "channel":
                     channelTick = null;
                     channelTicks = 0;
@@ -414,6 +454,29 @@ public final class JassFixtureMod {
                     settle(sender, "spendfloor", tick);
                     break;
                 }
+                case "protect": {
+                    // Stamina 20 (debt floor -60 by default): a cast of 12 is held, then an ordinary spend of 80.
+                    stamina.set(player, 20, CHARGE);
+                    cast = prepareCost(sender, player, stamina, "protect", 12);
+                    log(sender, "prepared protect spend " + describe(stamina.spend(player, 80, CHARGE)));
+                    settle(sender, "protect", cast);
+                    break;
+                }
+                case "protectdirect": {
+                    // The same held cast, then a direct addon action of 75 beside it.
+                    stamina.set(player, 20, CHARGE);
+                    cast = prepareCost(sender, player, stamina, "protectdirect", 12);
+                    log(sender, "prepared protectdirect direct " + describe(stamina.tryDiscreteAction(player, STRIKE, 75, false)));
+                    settle(sender, "protectdirect", cast);
+                    break;
+                }
+                case "truncate": {
+                    // Stamina 5 with the default debt floor -60: a cast of 70 can pay only 65.
+                    stamina.set(player, 5, CHARGE);
+                    cast = prepareCost(sender, player, stamina, "truncate", 70);
+                    settle(sender, "truncate", cast);
+                    break;
+                }
                 case "twice":
                     cast = prepare(sender, player, stamina, "twice");
                     settle(sender, "twice-1", cast);
@@ -421,8 +484,18 @@ public final class JassFixtureMod {
                     break;
                 default:
                     throw new CommandException("/jassfixture prepared <success|fail|pending|nested|listener|set|throwlistener|logout"
-                            + "|reserve|spendfloor|twice>");
+                            + "|reserve|spendfloor|protect|protectdirect|truncate|twice>");
             }
+        }
+
+        /** A cast with the given base cost; logs the final cost and the Payable Amount. */
+        private static PreparedStaminaAction prepareCost(ICommandSender sender, EntityPlayerMP player, IStaminaService stamina,
+                String label, double baseCost) {
+            String before = state(player, stamina);
+            PreparedStaminaAction cast = stamina.prepareDiscreteAction(player, CAST, baseCost, false, ItemStack.EMPTY, null);
+            log(sender, "prepared " + label + " result=" + cast.getResult() + " cost=" + format(cast.getFinalCost())
+                    + " payable=" + format(cast.getPayableAmount()) + " before " + before);
+            return cast;
         }
 
         private static PreparedStaminaAction prepare(ICommandSender sender, EntityPlayerMP player, IStaminaService stamina,

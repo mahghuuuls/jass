@@ -70,7 +70,7 @@ public final class ItemStaminaInfo {
         return swingCost;
     }
 
-    /** Stamina per second while drawn, or {@code NaN} for items not drawn like a bow; 0 means free. */
+    /** Stamina per second while drawn, or {@code NaN} for items JASS does not treat as a bow draw (not drawn like a bow, or addon-owned); 0 means free. */
     public double getDrawPerSecond() {
         return drawPerSecond;
     }

@@ -1,5 +1,6 @@
 package com.mahghuuuls.jass.gameplay.hooks;
 
+import com.mahghuuuls.jass.api.JassApi;
 import com.mahghuuuls.jass.config.ConfigModel;
 import com.mahghuuuls.jass.gameplay.ActionGate;
 import com.mahghuuuls.jass.gameplay.CostKind;
@@ -7,7 +8,6 @@ import com.mahghuuuls.jass.gameplay.ItemValueLookup;
 import com.mahghuuuls.jass.config.ItemKeys;
 import com.mahghuuuls.jass.api.JassActions;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumActionResult;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
@@ -51,7 +51,7 @@ public final class BowHook {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
         EntityPlayer player = event.getEntityPlayer();
-        if (player.world.isRemote || !isBowDraw(event.getItemStack()) || gate.canStart(player)) {
+        if (player.world.isRemote || !JassApi.isJassBowDraw(event.getItemStack()) || gate.canStart(player)) {
             return;
         }
         event.setCanceled(true);
@@ -63,7 +63,7 @@ public final class BowHook {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onUseStart(LivingEntityUseItemEvent.Start event) {
         if (!(event.getEntityLiving() instanceof EntityPlayer) || event.getEntityLiving().world.isRemote
-                || !isBowDraw(event.getItem())) {
+                || !JassApi.isJassBowDraw(event.getItem())) {
             return;
         }
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
@@ -90,7 +90,7 @@ public final class BowHook {
             return;
         }
         ItemStack stack = player.getActiveItemStack();
-        if (!isBowDraw(stack)) {
+        if (!JassApi.isJassBowDraw(stack)) {
             return;
         }
         double rate = ItemValueLookup.bowDrawCost(stack);
@@ -103,8 +103,4 @@ public final class BowHook {
         }
     }
 
-    /** The definition of a bow-draw item (REQ-032); the client guard uses the same test. */
-    private static boolean isBowDraw(ItemStack stack) {
-        return !stack.isEmpty() && stack.getItemUseAction() == EnumAction.BOW;
-    }
 }

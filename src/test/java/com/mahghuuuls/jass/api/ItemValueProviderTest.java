@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ItemValueProviderTest {
@@ -104,5 +105,63 @@ class ItemValueProviderTest {
         assertEquals(4.0, JassApi.firstUsable(providers, ItemValueKind.MELEE_COST, null));
         assertEquals(4.0, JassApi.firstUsable(providers, ItemValueKind.MELEE_COST, null));
         assertEquals(1, calls[0]);
+    }
+
+    @Test
+    void anyProviderOwningTheBowUseIsEnoughAndFailuresAreSkipped() {
+        List<RegisteredProvider<IItemValueProvider>> providers = Arrays.asList(
+                provider("silent-bow", new IItemValueProvider() { }),
+                provider("throws-bow", new IItemValueProvider() {
+                    @Override
+                    public boolean ownsBowUse(net.minecraft.item.ItemStack stack) {
+                        throw new IllegalStateException("broken");
+                    }
+                }),
+                provider("owner", new IItemValueProvider() {
+                    @Override
+                    public boolean ownsBowUse(net.minecraft.item.ItemStack stack) {
+                        return true;
+                    }
+                }));
+        assertTrue(JassApi.anyOwnsBowUse(providers, null));
+    }
+
+    @Test
+    void noProviderOwningTheBowUseMeansJassKeepsIt() {
+        List<RegisteredProvider<IItemValueProvider>> providers = Arrays.asList(
+                provider("silent-bow2", new IItemValueProvider() { }),
+                provider("throws-bow2", new IItemValueProvider() {
+                    @Override
+                    public boolean ownsBowUse(net.minecraft.item.ItemStack stack) {
+                        throw new IllegalStateException("broken");
+                    }
+                }));
+        assertFalse(JassApi.anyOwnsBowUse(providers, null));
+        assertFalse(new IItemValueProvider() { }.ownsBowUse(null));
+    }
+
+    @Test
+    void aProviderWithALinkageFailureIsSwitchedOffAndTheOthersStillAnswer() {
+        List<RegisteredProvider<IItemValueProvider>> providers = Arrays.asList(
+                provider("linkage-bow", new IItemValueProvider() {
+                    @Override
+                    public boolean ownsBowUse(net.minecraft.item.ItemStack stack) {
+                        throw new NoSuchMethodError("built against a newer API");
+                    }
+                }),
+                provider("owner-after-linkage", new IItemValueProvider() {
+                    @Override
+                    public boolean ownsBowUse(net.minecraft.item.ItemStack stack) {
+                        return true;
+                    }
+                }));
+        assertTrue(JassApi.anyOwnsBowUse(providers, null));
+        assertTrue(JassApi.anyOwnsBowUse(providers, null));
+    }
+
+    @Test
+    void anEmptyOrMissingStackIsNeverOwnedOrABowDraw() {
+        assertFalse(JassApi.isBowUseOwnedByAddon(null));
+        assertFalse(JassApi.isJassBowDraw(null));
     }
 }

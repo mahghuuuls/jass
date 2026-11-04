@@ -31,14 +31,14 @@ class ClaimLedgerTest {
     void reconcileRepricesAnOpenClaimOnly() {
         ClaimLedger ledger = new ClaimLedger();
         ClaimLedger.Claim claim = ledger.register(false, 12.0);
-        ledger.reconcile(claim, 6.0);
+        ledger.reconcile(claim, 6.0, 1000.0, Double.NEGATIVE_INFINITY);
         assertEquals(24.0, ledger.available(30.0), EPS);
-        ledger.reconcile(claim, 20.0);
+        ledger.reconcile(claim, 20.0, 1000.0, Double.NEGATIVE_INFINITY);
         assertEquals(10.0, ledger.available(30.0), EPS);
-        ledger.reconcile(claim, -5.0);
+        ledger.reconcile(claim, -5.0, 1000.0, Double.NEGATIVE_INFINITY);
         assertEquals(0.0, claim.amount(), EPS);
         ledger.resolve(claim, ClaimLedger.State.SETTLED);
-        ledger.reconcile(claim, 99.0);
+        ledger.reconcile(claim, 99.0, 1000.0, Double.NEGATIVE_INFINITY);
         assertEquals(0.0, claim.amount(), EPS);
     }
 
@@ -88,7 +88,7 @@ class ClaimLedgerTest {
         ClaimLedger ledger = new ClaimLedger();
         ClaimLedger.Claim claim = ledger.register(false, 0.0);
         assertEquals(10.0, ledger.available(10.0), EPS);
-        ledger.reconcile(claim, 4.0);
+        ledger.reconcile(claim, 4.0, 1000.0, Double.NEGATIVE_INFINITY);
         assertEquals(6.0, ledger.available(10.0), EPS);
     }
 
@@ -131,7 +131,7 @@ class ClaimLedgerTest {
         ClaimLedger.Claim channel = ledger.register(true, ClaimLedger.reserve(2.0, ledger.available(5.0)));
         assertEquals(2.0, channel.amount(), EPS);
         ClaimLedger.Claim sprint = ledger.register(true, 10.0);
-        ledger.reconcile(sprint, ClaimLedger.reserve(10.0, ledger.availableExcept(5.0, sprint)));
+        ledger.reconcile(sprint, 10.0, 5.0, -60.0);
         assertEquals(3.0, sprint.amount(), EPS);
         assertEquals(0.0, ledger.available(5.0), EPS);
     }
@@ -141,10 +141,10 @@ class ClaimLedgerTest {
         ClaimLedger ledger = new ClaimLedger();
         ledger.register(false, 4.0);
         ClaimLedger.Claim tick = ledger.register(true, 0.0);
-        ledger.reconcile(tick, ClaimLedger.reserve(2.0, ledger.availableExcept(5.0, tick)));
+        ledger.reconcile(tick, 2.0, 5.0, -60.0);
         assertEquals(1.0, tick.amount(), EPS);
         ClaimLedger.Claim late = ledger.register(true, 0.0);
-        ledger.reconcile(late, ClaimLedger.reserve(2.0, ledger.availableExcept(5.0, late)));
+        ledger.reconcile(late, 2.0, 5.0, -60.0);
         assertEquals(0.0, late.amount(), EPS);
     }
 
@@ -153,18 +153,18 @@ class ClaimLedgerTest {
         // REQ-089 criterion 4: Stamina 5, a reserve of 2; spending 10 spends 3.
         ClaimLedger ledger = new ClaimLedger();
         ledger.register(true, 2.0);
-        assertEquals(3.0, ledger.spendable(10.0, 5.0), EPS);
-        assertEquals(1.0, ledger.spendable(1.0, 5.0), EPS);
-        assertEquals(0.0, ledger.spendable(4.0, 1.5), EPS);
+        assertEquals(3.0, ledger.spendable(10.0, 5.0, Double.NEGATIVE_INFINITY), EPS);
+        assertEquals(1.0, ledger.spendable(1.0, 5.0, Double.NEGATIVE_INFINITY), EPS);
+        assertEquals(0.0, ledger.spendable(4.0, 1.5, Double.NEGATIVE_INFINITY), EPS);
     }
 
     @Test
-    void spendIsNotLimitedByDiscreteClaimsOrWithoutClaims() {
+    void withUncappedDebtSpendIsNotLimitedByDiscreteClaims() {
         ClaimLedger ledger = new ClaimLedger();
-        assertEquals(10.0, ledger.spendable(10.0, 5.0), EPS);
+        assertEquals(10.0, ledger.spendable(10.0, 5.0, Double.NEGATIVE_INFINITY), EPS);
         ledger.register(false, 12.0);
-        assertEquals(10.0, ledger.spendable(10.0, 5.0), EPS);
-        assertEquals(0.0, ledger.spendable(-3.0, 5.0), EPS);
+        assertEquals(10.0, ledger.spendable(10.0, 5.0, Double.NEGATIVE_INFINITY), EPS);
+        assertEquals(0.0, ledger.spendable(-3.0, 5.0, Double.NEGATIVE_INFINITY), EPS);
     }
 
     @Test
@@ -195,5 +195,127 @@ class ClaimLedgerTest {
         ledger.register(true, 0.5);
         assertEquals(2.5, ledger.reserved(), EPS);
         assertEquals(5.5, ledger.available(20.0), EPS);
+    }
+
+    @Test
+    void aSpendBesideADiscreteClaimStopsAboveItsPayableAmount() {
+        // Stamina 20, debt floor -60, claim 12: spend 80 stops at -48 (68 spent); settling then pays 12 to -60.
+        StaminaPool pool = new StaminaPool(20.0);
+        ClaimLedger ledger = new ClaimLedger();
+        ClaimLedger.Claim cast = ledger.register(false, 12.0);
+        ledger.reconcile(cast, 12.0, pool.stamina(), -60.0);
+        assertEquals(12.0, cast.payable(), EPS);
+        pool.payDiscrete(ledger.spendable(80.0, pool.stamina(), -60.0), ledger.raisedFloor(-60.0, null), 0.75);
+        assertEquals(-48.0, pool.stamina(), EPS);
+        ledger.resolve(cast, ClaimLedger.State.SETTLED);
+        pool.payDiscrete(cast.payable(), ledger.raisedFloor(-60.0, null), 0.75);
+        assertEquals(-60.0, pool.stamina(), EPS);
+    }
+
+    @Test
+    void aDirectActionBesideADiscreteClaimStopsAboveItsPayableAmount() {
+        // The same claim; a direct action of 75 may start (Available 8) and pays down to -48 only.
+        StaminaPool pool = new StaminaPool(20.0);
+        ClaimLedger ledger = new ClaimLedger();
+        ClaimLedger.Claim cast = ledger.register(false, 12.0);
+        ledger.reconcile(cast, 12.0, pool.stamina(), -60.0);
+        assertEquals(8.0, ledger.available(pool.stamina()), EPS);
+        ClaimLedger.Claim swing = ledger.register(false, 75.0);
+        ledger.reconcile(swing, 75.0, pool.stamina(), -60.0);
+        ledger.resolve(swing, ClaimLedger.State.SETTLED);
+        pool.payDiscrete(swing.payable(), ledger.raisedFloor(-60.0, null), 0.75);
+        assertEquals(-48.0, pool.stamina(), EPS);
+        ledger.resolve(cast, ClaimLedger.State.SETTLED);
+        pool.payDiscrete(cast.payable(), ledger.raisedFloor(-60.0, null), 0.75);
+        assertEquals(-60.0, pool.stamina(), EPS);
+    }
+
+    @Test
+    void thePayableAmountIsTruncatedOnceAtPreparation() {
+        // Stamina 5, debt floor -10, final cost 20: Payable Amount 15; settling leaves -10.
+        StaminaPool pool = new StaminaPool(5.0);
+        ClaimLedger ledger = new ClaimLedger();
+        ClaimLedger.Claim cast = ledger.register(false, 20.0);
+        ledger.reconcile(cast, 20.0, pool.stamina(), -10.0);
+        assertEquals(15.0, cast.payable(), EPS);
+        assertEquals(20.0, cast.amount(), EPS);
+        ledger.resolve(cast, ClaimLedger.State.SETTLED);
+        pool.payDiscrete(cast.payable(), ledger.raisedFloor(-10.0, null), 0.75);
+        assertEquals(-10.0, pool.stamina(), EPS);
+    }
+
+    @Test
+    void otherClaimsAndReservesShrinkTheRoom() {
+        ClaimLedger ledger = new ClaimLedger();
+        ClaimLedger.Claim first = ledger.register(false, 30.0);
+        ledger.reconcile(first, 30.0, 10.0, -40.0);
+        assertEquals(30.0, first.payable(), EPS);
+        ledger.register(true, 5.0);
+        ClaimLedger.Claim second = ledger.register(false, 30.0);
+        ledger.reconcile(second, 30.0, 10.0, -40.0);
+        // 10 - (-40 + 30) - 5 = 15
+        assertEquals(15.0, second.payable(), EPS);
+        assertEquals(-40.0 + 30.0 + 15.0, ledger.raisedFloor(-40.0, null), EPS);
+        assertEquals(-40.0 + 15.0, ledger.raisedFloor(-40.0, first), EPS);
+    }
+
+    @Test
+    void uncappedDebtNeverTruncatesAndKeepsTheFloorUncapped() {
+        ClaimLedger ledger = new ClaimLedger();
+        ClaimLedger.Claim cast = ledger.register(false, 500.0);
+        ledger.reconcile(cast, 500.0, 1.0, Double.NEGATIVE_INFINITY);
+        assertEquals(500.0, cast.payable(), EPS);
+        assertEquals(Double.NEGATIVE_INFINITY, ledger.raisedFloor(Double.NEGATIVE_INFINITY, null), 0.0);
+    }
+
+    @Test
+    void withoutDiscreteClaimsTheRaisedFloorIsTheDebtFloor() {
+        ClaimLedger ledger = new ClaimLedger();
+        assertEquals(-60.0, ledger.raisedFloor(-60.0, null), EPS);
+        ledger.register(true, 2.0);
+        assertEquals(-60.0, ledger.raisedFloor(-60.0, null), EPS);
+    }
+
+    @Test
+    void aResolvedClaimNoLongerRaisesTheFloor() {
+        ClaimLedger ledger = new ClaimLedger();
+        ClaimLedger.Claim cast = ledger.register(false, 12.0);
+        ledger.reconcile(cast, 12.0, 20.0, -60.0);
+        ledger.resolve(cast, ClaimLedger.State.RELEASED);
+        assertEquals(-60.0, ledger.raisedFloor(-60.0, null), EPS);
+    }
+
+    @Test
+    void spendStopsAboveADiscreteClaimsPayableAmount() {
+        ClaimLedger ledger = new ClaimLedger();
+        ClaimLedger.Claim cast = ledger.register(false, 12.0);
+        ledger.reconcile(cast, 12.0, 20.0, -60.0);
+        assertEquals(68.0, ledger.spendable(80.0, 20.0, -60.0), EPS);
+        assertEquals(10.0, ledger.spendable(10.0, 20.0, -60.0), EPS);
+        assertEquals(0.0, ledger.spendable(10.0, -48.0, -60.0), EPS);
+    }
+
+    @Test
+    void aFloorAboveStaminaWhilePricingNeverRaisesStamina() {
+        // Stamina 5, a provisional cast of 70 (floor -60 + 70 = 10): a spend of 1 from a cost listener spends nothing.
+        StaminaPool pool = new StaminaPool(5.0);
+        ClaimLedger ledger = new ClaimLedger();
+        ClaimLedger.Claim cast = ledger.register(false, 70.0);
+        assertEquals(0.0, ledger.spendable(1.0, pool.stamina(), -60.0), EPS);
+        pool.payDiscrete(1.0, ledger.raisedFloor(-60.0, null), 0.75);
+        assertEquals(5.0, pool.stamina(), EPS);
+        ledger.reconcile(cast, 70.0, pool.stamina(), -60.0);
+        assertEquals(65.0, cast.payable(), EPS);
+    }
+
+    @Test
+    void aTruncatedPaymentLandsExactlyOnTheFloor() {
+        StaminaPool pool = new StaminaPool(36.112);
+        ClaimLedger ledger = new ClaimLedger();
+        ClaimLedger.Claim swing = ledger.register(false, 139.28);
+        ledger.reconcile(swing, 139.28, pool.stamina(), -30.0);
+        ledger.resolve(swing, ClaimLedger.State.SETTLED);
+        pool.payDiscrete(swing.payable(), ledger.raisedFloor(-30.0, null), 0.75);
+        assertEquals(-30.0, pool.stamina(), 0.0);
     }
 }

@@ -14,6 +14,9 @@ public final class StaminaPool {
     /** Leftover regeneration time below this is the delay countdown's rounding residue, not real time. */
     private static final double DELAY_RESIDUE_SECONDS = 1e-6;
 
+    /** A payment landing this close above the floor lands on it; it absorbs rounding of a limited cost. */
+    private static final double FLOOR_RESIDUE = 1e-9;
+
     private double stamina;
     private double delayRemaining;
     private boolean drainedSinceLastTick;
@@ -53,7 +56,14 @@ public final class StaminaPool {
         if (finalCost <= 0.0) {
             return;
         }
-        stamina = Math.max(stamina - finalCost, debtFloor);
+        double next = Math.max(stamina - finalCost, debtFloor);
+        if (next - debtFloor < FLOOR_RESIDUE) {
+            // A cost limited to reach the floor exactly can land a rounding step above it.
+            next = debtFloor;
+        }
+        // A floor above the current Stamina (raised by claims while a cost is being priced) never
+        // turns a payment into a gain.
+        stamina = Math.min(stamina, next);
         delayRemaining = delaySeconds;
     }
 

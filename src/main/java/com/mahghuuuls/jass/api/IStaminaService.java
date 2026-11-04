@@ -31,9 +31,9 @@ public interface IStaminaService {
     boolean isSpendingGated(EntityPlayer player);
 
     /**
-     * Removes {@code amount} directly, down to the debt floor. While a prepared continuous tick
-     * reserves Stamina, spend stops above the reserve; the amount spent is
-     * {@code -result.getActualDelta()} (REQ-089). Like {@link #restore} and {@link #set},
+     * Removes {@code amount} directly, down to the debt floor. While prepared actions are open, spend
+     * stops above a continuous tick's reserve and above the room a discrete preparation's Payable
+     * Amount holds; the amount spent is {@code -result.getActualDelta()} (REQ-089). Like {@link #restore} and {@link #set},
      * this is a direct mutation: no start rule, efficiency, cost event, Creative exemption, or Inhibited
      * gating. For an action the player performs, use {@link #tryDiscreteAction} or
      * {@link #drainContinuousTick}, which follow every rule.
@@ -48,7 +48,7 @@ public interface IStaminaService {
 
     /**
      * An addon Discrete Action following every JASS rule: refused at 0 or below, efficiency, minimum
-     * cost, the cost event, debt, Creative, and gating. {@code movement} applies the weight multiplier.
+     * cost, the cost event, debt (not into the room an open discrete preparation holds), Creative, and gating. {@code movement} applies the weight multiplier.
      */
     StaminaMutationResult tryDiscreteAction(EntityPlayer player, ResourceLocation action, double baseCost,
             boolean movement);
@@ -94,6 +94,24 @@ public interface IStaminaService {
     default PreparedStaminaAction prepareContinuousTick(EntityPlayer player, ResourceLocation action,
             double costPerSecond, boolean movement, ItemStack stack, EnumHand hand) {
         throw new UnsupportedOperationException("prepared actions need JASS API 1.1 or later");
+    }
+
+    /**
+     * Checks whether an action may start now, without pricing it: the same Creative and spectator
+     * exemption, Inhibited gating, and start rule on Available Stamina as a preparation. When refused,
+     * the denial is recorded and the player sees the refusal feedback. No cost event is posted, no
+     * Stamina Claim is opened, and no Stamina, delay, or regeneration changes. Use it for an action
+     * that is configured to cost nothing but must still respect exhaustion. Server thread only. Since
+     * API 1.2: on JASS 1.1 or older the call fails with {@code NoSuchMethodError}, so check
+     * {@link JassApi#API_VERSION} first.
+     *
+     * @param stack the item behind the action, or {@link ItemStack#EMPTY}; not used by the check today
+     *              ({@code null} is accepted)
+     * @param hand  the hand behind the action, or {@code null}; not used by the check today
+     * @return {@code true} if the action may start; {@code false} when refused or without a Stamina session
+     */
+    default boolean checkActionStart(EntityPlayer player, ResourceLocation action, ItemStack stack, EnumHand hand) {
+        throw new UnsupportedOperationException("the start check needs JASS API 1.2 or later");
     }
 
     /** As {@link #tryDiscreteAction}, telling cost event listeners the item and hand (REQ-087). */

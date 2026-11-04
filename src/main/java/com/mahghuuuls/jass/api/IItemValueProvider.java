@@ -50,4 +50,16 @@ public interface IItemValueProvider {
     default double heldWeight(ItemStack stack) {
         return Double.NaN;
     }
+
+    /**
+     * True when this addon owns the bow-action use of this stack, such as a wand whose spell uses the
+     * bow animation: JASS then applies none of its bow-draw rules to it (no start refusal at zero
+     * Stamina, no drain, no client-side refusal, no bow-draw tooltip line), and the addon prices the
+     * use itself. Unlike the value answers above, configuration has no entry for this and there is
+     * no "first answer": any provider answering {@code true} is enough. Asked on both sides, like the
+     * other answers, so it must give the same answer on both. Since API 1.2; JASS 1.1 never calls it.
+     */
+    default boolean ownsBowUse(ItemStack stack) {
+        return false;
+    }
 }

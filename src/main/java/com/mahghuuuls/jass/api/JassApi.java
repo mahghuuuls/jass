@@ -2,6 +2,7 @@ package com.mahghuuuls.jass.api;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemStack;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -108,26 +109,72 @@ public final class JassApi {
         return firstUsable(itemValueProviders, kind, stack);
     }
 
+    /**
+     * Whether JASS treats this stack as a bow-draw item: drawn or aimed like a bow, and no item value
+     * provider owns its bow-action use. JASS's server hook, client guard and tooltip all use this one
+     * test; an addon may call it too. Since API 1.2.
+     */
+    public static boolean isJassBowDraw(ItemStack stack) {
+        return bowDraw(stack, isBowUseOwnedByAddon(stack));
+    }
+
+    /** The bow-draw test once ownership is known. */
+    static boolean bowDraw(ItemStack stack, boolean ownedByAddon) {
+        return stack != null && !stack.isEmpty() && stack.getItemUseAction() == EnumAction.BOW && !ownedByAddon;
+    }
+
+    /**
+     * True when any registered item value provider answers {@link IItemValueProvider#ownsBowUse} for
+     * the stack. A provider that fails is skipped, as for value answers. Read by JASS; an addon may
+     * call it. Since API 1.2.
+     */
+    public static boolean isBowUseOwnedByAddon(ItemStack stack) {
+        if (stack == null || stack.isEmpty() || itemValueProviders.isEmpty()) {
+            return false;
+        }
+        return anyOwnsBowUse(itemValueProviders, stack);
+    }
+
+    /** True when any provider answers {@code true}; failures are skipped and logged like value answers. */
+    static boolean anyOwnsBowUse(List<RegisteredProvider<IItemValueProvider>> providers, ItemStack stack) {
+        for (RegisteredProvider<IItemValueProvider> entry : providers) {
+            Boolean owns = askSafely(entry, "ownsBowUse", p -> p.ownsBowUse(stack));
+            if (owns != null && owns) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Asks one provider, applying the provider failure policy in one place: a switched-off provider
+     * is not asked; a {@code LinkageError} switches it off for the session; a {@code RuntimeException}
+     * is logged at most once a minute. Returns {@code null} when there is no answer.
+     */
+    private static <T> T askSafely(RegisteredProvider<IItemValueProvider> entry, String what,
+            java.util.function.Function<IItemValueProvider, T> question) {
+        if (disabledItemValueProviders.contains(entry.getId())) {
+            return null;
+        }
+        try {
+            return question.apply(entry.getProvider());
+        } catch (LinkageError e) {
+            disabledItemValueProviders.add(entry.getId());
+            LOGGER.warn("JASS item value provider {} switched off after a linkage failure: {}", entry.getId(), e.toString());
+        } catch (RuntimeException e) {
+            logFailure(entry.getId(), what + " failed: " + e);
+        }
+        return null;
+    }
+
     /** The first usable answer in order; unusable answers and failures are skipped and logged. */
     static double firstUsable(List<RegisteredProvider<IItemValueProvider>> providers, ItemValueKind kind, ItemStack stack) {
         for (RegisteredProvider<IItemValueProvider> entry : providers) {
-            if (disabledItemValueProviders.contains(entry.getId())) {
+            Double answer = askSafely(entry, kind.toString(), p -> kind.ask(p, stack));
+            if (answer == null || Double.isNaN(answer)) {
                 continue;
             }
-            double value;
-            try {
-                value = kind.ask(entry.getProvider(), stack);
-            } catch (LinkageError e) {
-                disabledItemValueProviders.add(entry.getId());
-                LOGGER.warn("JASS item value provider {} switched off after a linkage failure: {}", entry.getId(), e.toString());
-                continue;
-            } catch (RuntimeException e) {
-                logFailure(entry.getId(), kind + " failed: " + e);
-                continue;
-            }
-            if (Double.isNaN(value)) {
-                continue;
-            }
+            double value = answer;
             if (kind.valid(value)) {
                 return value;
             }

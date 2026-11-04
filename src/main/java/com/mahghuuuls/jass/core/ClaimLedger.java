@@ -23,20 +23,31 @@ public final class ClaimLedger {
     public static final class Claim {
         private final boolean continuous;
         private double amount;
+        /** A discrete claim's Payable Amount; equal to {@link #amount} until it is limited at reconciliation. */
+        private double payable;
         private State state = State.OPEN;
 
         private Claim(boolean continuous, double amount) {
             this.continuous = continuous;
             this.amount = amount;
+            this.payable = amount;
         }
 
         public boolean isContinuous() {
             return continuous;
         }
 
-        /** Stamina held: the discrete final cost, or the continuous reserve. */
+        /** The discrete final cost, or the continuous reserve; Available Stamina counts it as spent. */
         public double amount() {
             return amount;
+        }
+
+        /**
+         * The Stamina this claim pays when settled: a discrete claim's Payable Amount, or a continuous
+         * claim's reserve.
+         */
+        public double payable() {
+            return continuous ? amount : payable;
         }
 
         public State state() {
@@ -58,11 +69,38 @@ public final class ClaimLedger {
         return claim;
     }
 
-    /** Sets an open claim's amount once its final cost is known. */
-    public void reconcile(Claim claim, double amount) {
-        if (claim.isOpen()) {
-            claim.amount = Math.max(0.0, amount);
+    /**
+     * Sets an open claim from its final cost, once pricing is done. A continuous claim reserves at
+     * most the Available Stamina above 0 (never debt). A discrete claim holds the final cost and fixes
+     * its Payable Amount: the final cost limited to the room the debt floor leaves after the other
+     * open claims (Stamina minus the raised floor and the continuous reserves, at least 0); with an
+     * uncapped debt floor it is the final cost. Nothing else changes the Payable Amount afterwards.
+     */
+    public void reconcile(Claim claim, double finalCost, double stamina, double debtFloor) {
+        if (!claim.isOpen()) {
+            return;
         }
+        if (claim.continuous) {
+            claim.amount = reserve(finalCost, availableExcept(stamina, claim));
+            return;
+        }
+        claim.amount = Math.max(0.0, finalCost);
+        double room = stamina - raisedFloor(debtFloor, claim) - reserved();
+        claim.payable = Math.min(claim.amount, Math.max(0.0, room));
+    }
+
+    /**
+     * The lowest Stamina a payment other than {@code except}'s own settlement may reach: the debt
+     * floor raised by the Payable Amounts of the open discrete claims, leaving out {@code except}.
+     */
+    public double raisedFloor(double debtFloor, Claim except) {
+        double floor = debtFloor;
+        for (Claim claim : open) {
+            if (!claim.continuous && claim != except) {
+                floor += claim.payable;
+            }
+        }
+        return floor;
     }
 
     /** Stamina minus every open claim (REQ-089). */
@@ -87,14 +125,17 @@ public final class ClaimLedger {
     }
 
     /**
-     * How much of an API spend of {@code amount} may be taken from {@code stamina} (REQ-089): all of
-     * it while no continuous reserve is open; otherwise never so much that Stamina drops below the
-     * reserves, and nothing when Stamina is already at or below them.
+     * How much of an API spend of {@code amount} may be taken from {@code stamina}: never so much
+     * that Stamina drops below the open continuous reserves, nor below the raised floor (the debt
+     * floor plus the open discrete claims' Payable Amounts); nothing when Stamina is already there.
      */
-    public double spendable(double amount, double stamina) {
+    public double spendable(double amount, double stamina, double debtFloor) {
         double wanted = Math.max(0.0, amount);
         double reserved = reserved();
-        return reserved > 0.0 ? Math.min(wanted, Math.max(0.0, stamina - reserved)) : wanted;
+        if (reserved > 0.0) {
+            wanted = Math.min(wanted, Math.max(0.0, stamina - reserved));
+        }
+        return Math.min(wanted, Math.max(0.0, stamina - raisedFloor(debtFloor, null)));
     }
 
     /**
