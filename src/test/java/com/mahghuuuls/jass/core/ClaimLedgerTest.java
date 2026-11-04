@@ -297,7 +297,9 @@ class ClaimLedgerTest {
 
     @Test
     void aFloorAboveStaminaWhilePricingNeverRaisesStamina() {
-        // Stamina 5, a provisional cast of 70 (floor -60 + 70 = 10): a spend of 1 from a cost listener spends nothing.
+        // Defensive case: a raised floor above Stamina (Stamina 5, an unlimited claim of 70, floor 10). The
+        // gate's own registration limits every claim, so it does not create this state; if it ever
+        // arises, a spend of 1 spends nothing and no payment raises Stamina.
         StaminaPool pool = new StaminaPool(5.0);
         ClaimLedger ledger = new ClaimLedger();
         ClaimLedger.Claim cast = ledger.register(false, 70.0);
@@ -322,12 +324,12 @@ class ClaimLedgerTest {
     @Test
     void aClaimSettledWhileAnotherIsPricedStillPaysItsPayableAmount() {
         // Stamina 20, floor -60: A (12) is open; B (70) is registered for pricing; a listener settles A.
+        // Uses the registration entry the gate uses; an unlimited provisional B (70) would raise A's
+        // floor to 10, so A would pay 10 instead of 12.
         StaminaPool pool = new StaminaPool(20.0);
         ClaimLedger ledger = new ClaimLedger();
-        ClaimLedger.Claim a = ledger.register(false, 0.0);
-        ledger.reconcile(a, 12.0, pool.stamina(), -60.0);
-        ClaimLedger.Claim b = ledger.register(false, 0.0);
-        ledger.reconcile(b, 70.0, pool.stamina(), -60.0);
+        ClaimLedger.Claim a = ledger.register(false, 12.0, pool.stamina(), -60.0);
+        ClaimLedger.Claim b = ledger.register(false, 70.0, pool.stamina(), -60.0);
         assertEquals(68.0, b.payable(), EPS);
         ledger.resolve(a, ClaimLedger.State.SETTLED);
         pool.payDiscrete(a.payable(), ledger.raisedFloor(-60.0, a), 0.75);

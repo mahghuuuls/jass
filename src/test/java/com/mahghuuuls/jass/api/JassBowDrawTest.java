@@ -34,21 +34,28 @@ class JassBowDrawTest {
 
     @Test
     void aVanillaBowIsABowDraw() {
-        ItemStack bow = new ItemStack(Items.BOW);
-        assertTrue(JassApi.hasBowUseAction(bow));
-        assertFalse(JassApi.anyOwnsBowUse(ownerOfTheNamedBow(), bow));
+        assertTrue(JassApi.isJassBowDraw(new ItemStack(Items.BOW), ownerOfTheNamedBow()));
     }
 
     @Test
     void anItemWithoutTheBowUseActionIsNot() {
-        assertFalse(JassApi.hasBowUseAction(new ItemStack(Items.IRON_SWORD)));
+        assertFalse(JassApi.isJassBowDraw(new ItemStack(Items.IRON_SWORD), ownerOfTheNamedBow()));
     }
 
     @Test
-    void anOwnedBowStillHasTheBowUseActionButIsClaimed() {
+    void anOwnedBowIsNotABowDrawForJass() {
         ItemStack owned = new ItemStack(Items.BOW);
         owned.setStackDisplayName(OWNED_NAME);
         assertTrue(JassApi.hasBowUseAction(owned));
-        assertTrue(JassApi.anyOwnsBowUse(ownerOfTheNamedBow(), owned));
+        assertFalse(JassApi.isJassBowDraw(owned, ownerOfTheNamedBow()));
+    }
+
+    @Test
+    void withNoItemValueProviderInstalledABowIsABowDrawAndNotOwned() {
+        // The test runtime registers no provider in JassApi, as in a pack without such an addon. No
+        // test may register one: JassApi registration is global to the test JVM and cannot be undone.
+        ItemStack bow = new ItemStack(Items.BOW);
+        assertFalse(JassApi.isBowUseOwnedByAddon(bow));
+        assertTrue(JassApi.isJassBowDraw(bow));
     }
 }

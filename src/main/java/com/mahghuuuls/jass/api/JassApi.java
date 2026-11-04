@@ -115,7 +115,12 @@ public final class JassApi {
      * test; an addon may call it too. Since API 1.2.
      */
     public static boolean isJassBowDraw(ItemStack stack) {
-        return hasBowUseAction(stack) && !isBowUseOwnedByAddon(stack);
+        return isJassBowDraw(stack, itemValueProviders);
+    }
+
+    /** The bow-draw test against a given provider list. */
+    static boolean isJassBowDraw(ItemStack stack, List<RegisteredProvider<IItemValueProvider>> providers) {
+        return hasBowUseAction(stack) && !anyOwnsBowUse(providers, stack);
     }
 
     /** Drawn or aimed like a bow; checked first, so providers are asked only for such stacks. */
@@ -125,8 +130,8 @@ public final class JassApi {
 
     /**
      * True when any registered item value provider answers {@link IItemValueProvider#ownsBowUse} for
-     * the stack. A provider that fails is skipped, as for value answers. Read by JASS; an addon may
-     * call it. Since API 1.2.
+     * the stack. A provider that fails is skipped, as for value answers. {@link #isJassBowDraw} asks
+     * the same providers in the same way; this method is for addons. Since API 1.2.
      */
     public static boolean isBowUseOwnedByAddon(ItemStack stack) {
         if (stack == null || stack.isEmpty() || itemValueProviders.isEmpty()) {

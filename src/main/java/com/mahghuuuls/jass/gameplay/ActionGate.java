@@ -167,8 +167,7 @@ public final class ActionGate {
         ClaimLedger ledger = session.claims;
         // Provisional claim at the pre-event cost, limited like a final one, so a payment made while
         // the cost event runs (a settle or spend from a listener) never sees more than its real room.
-        ClaimLedger.Claim claim = ledger.register(continuous, 0.0);
-        ledger.reconcile(claim, cost, session.pool.stamina(), debtFloor(profile));
+        ClaimLedger.Claim claim = ledger.register(continuous, cost, session.pool.stamina(), debtFloor(profile));
         if (viaApi) {
             // Direct actions resolve their claim within this call (or release it below on an exception).
             claimed.put(session, player);
@@ -187,14 +186,15 @@ public final class ActionGate {
                 return prepared(player, action, continuous, stack, hand, viaApi, session, null,
                         PreparationResult.REFUSED, 0.0);
             }
-            claim = ledger.register(continuous, finalCost);
+            claim = ledger.register(continuous, finalCost, session.pool.stamina(), debtFloor(profile));
         }
         if (finalCost <= 0.0 && viaApi) {
             ledger.resolve(claim, ClaimLedger.State.RELEASED);
             return prepared(player, action, continuous, stack, hand, viaApi, session, null, PreparationResult.FREE, 0.0);
         }
         // A direct action with a final cost of 0 keeps its zero claim and settles through the paid
-        // path, which changes nothing but still writes its debug line, as before.
+        // path, which changes nothing but still writes its debug line, as before. For a claim opened
+        // again after pricing this repeats its limit and changes nothing.
         ledger.reconcile(claim, finalCost, session.pool.stamina(), debtFloor(profile));
         if (continuous && viaApi && claim.amount() <= 0.0) {
             // Something started during pricing used the rest of the Available Stamina.

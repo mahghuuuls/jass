@@ -23,7 +23,7 @@ public final class ClaimLedger {
     public static final class Claim {
         private final boolean continuous;
         private double amount;
-        /** A discrete claim's Payable Amount; equal to {@link #amount} until it is limited at reconciliation. */
+        /** A discrete claim's Payable Amount; limited when the claim is opened and again at reconciliation. */
         private double payable;
         private State state = State.OPEN;
 
@@ -62,15 +62,25 @@ public final class ClaimLedger {
     /** Usually empty; a claim lives at most until the end of the server tick that made it. */
     private final List<Claim> open = new ArrayList<>(2);
 
-    /** Opens a claim, provisional until {@link #reconcile}d. Negative amounts count as 0. */
-    public Claim register(boolean continuous, double amount) {
+    /**
+     * Opens a claim already limited like a reconciled one, so no payment made before the next
+     * {@link #reconcile} can see an unlimited Payable Amount or reserve.
+     */
+    public Claim register(boolean continuous, double cost, double stamina, double debtFloor) {
+        Claim claim = register(continuous, 0.0);
+        reconcile(claim, cost, stamina, debtFloor);
+        return claim;
+    }
+
+    /** Opens a claim at a plain amount with no limit applied. Negative amounts count as 0. */
+    Claim register(boolean continuous, double amount) {
         Claim claim = new Claim(continuous, Math.max(0.0, amount));
         open.add(claim);
         return claim;
     }
 
     /**
-     * Sets an open claim from its cost: once at registration with the pre-event cost, and once after
+     * Sets an open claim from its cost: at registration with the pre-event cost, and again after
      * pricing with the final cost; nothing else changes it. A continuous claim reserves at
      * most the Available Stamina above 0 (never debt). A discrete claim holds the final cost and fixes
      * its Payable Amount: the final cost limited to the room the debt floor leaves after the other
