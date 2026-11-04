@@ -26,7 +26,7 @@ There are other mods that add stamina to Minecraft 1.12.2, including [StaminaPlu
 
 - Blocking a hit costs stamina based on the damage of the hit.
 - While a shield is raised, stamina regenerates at only 20 percent of its normal speed.
-- Each shield has a Stability value. Higher Stability makes blocks cheaper.
+- Each shield has a Stability value. Higher Stability makes blocks cheaper. Armor, held items, and baubles can add to it (the Stability Bonus) through item modifiers.
 - A shield can be set to stop only part of a melee hit or an arrow. The rest of the damage goes through. The vanilla shield stops everything by default.
 - Guard Break: a block that takes your stamina to zero or below still works, but then the shield is lowered and cannot be raised for a short time. The shield shows a cooldown and plays the shield-break sound.
 - At zero or below you cannot block, and the hit deals full damage.
@@ -37,6 +37,7 @@ There are other mods that add stamina to Minecraft 1.12.2, including [StaminaPlu
 - More weight makes sprinting, jumping, and dodging cost more stamina. Each weight point adds 2 percent. Swing, bow, and block costs do not change with weight.
 - Heavier armor weighs more. A full leather set weighs 6, and a full diamond set weighs 23.
 - Shields and weapons add weight while held: a shield 4, a sword 2, an axe 3.
+- Item modifiers can make gear lighter or heavier: a flat amount, or a percentage of your total weight.
 - Item tooltips show each item's weight.
 
 ### Display and Tooltips
@@ -106,7 +107,7 @@ Operators can use `/stamina inspect` to see a player's stamina, stats, weight, a
 
 ## For Mod Developers
 
-JASS includes a public API for addons. Addons can read and change stamina, add their own stamina actions, check an action before its effect and pay only when it succeeds, add stat modifiers, supply default stamina values for their items, adjust or cancel any cost, and replace the display or the tooltip lines. See the API section of the [source repository](https://github.com/mahghuuuls/jass).
+JASS includes a public API for addons. Addons can read and change stamina, add their own stamina actions, check an action before its effect and pay only when it succeeds, check whether an action may start without paying, take over the bow-like use of their own items, add stat modifiers, supply default stamina values for their items, adjust or cancel any cost, and replace the display or the tooltip lines. See the API section of the [source repository](https://github.com/mahghuuuls/jass).
 
 ## Detailed System Reference
 
@@ -164,7 +165,7 @@ A block costs:
 damage x block_stamina_per_damage x stability_scale / (stability_scale + Stability)
 ```
 
-With the defaults (`block_stamina_per_damage` `1.0`, `stability_scale` `100`) and the vanilla shield's Stability of `50`, a block costs `0.67` stamina per point of damage. A shield without a Stability entry uses `default_shield_stability` (default `0`), so it pays the full damage.
+Stability here is the shield's Stability plus the player's Stability Bonus from item modifiers, and never below `0`. With the defaults (`block_stamina_per_damage` `1.0`, `stability_scale` `100`) and the vanilla shield's Stability of `50`, a block costs `0.67` stamina per point of damage. A shield without a Stability entry uses `default_shield_stability` (default `0`), so it pays the full damage.
 
 Block shares set how much of a hit a shield stops: `1.0` stops everything, `0.7` lets 30 percent through. Melee hits and projectiles have separate lists:
 
@@ -194,7 +195,7 @@ Weight multiplies only sprint, jump, and dodge costs:
 1 + Effective Weight x weight_factor
 ```
 
-With the default `weight_factor` of `0.02`, each weight point adds 2 percent. Effective Weight is the weight of the worn armor plus the weight of the items in both hands.
+With the default `weight_factor` of `0.02`, each weight point adds 2 percent. Effective Weight is the weight of the worn armor plus the weight of the items in both hands, changed by any weight modifiers, and never below `0`.
 
 Default armor weight per full set: leather `6`, gold `11`, chainmail `11`, iron `17`, diamond `23`. Armor without an entry weighs its armor points. Default held weight: shield `4`, every vanilla sword `2`, every vanilla axe `3`, everything else `0`. For example, full iron armor with a sword and a shield weighs `23`, so sprinting costs 46 percent more.
 
@@ -227,8 +228,10 @@ Available fields:
 - `flat_regeneration`, `regeneration_increase`, and `regeneration_reduction`
 - `flat_delay`, `delay_increase`, and `delay_reduction`
 - `efficiency`
+- `stability`: points added to the Stability of every block you make. It can be negative.
+- `flat_weight`: weight points added to Effective Weight. `weight_increase` and `weight_reduction`: the total weight then goes up or down by that share.
 
-Increases and reductions are fractions: `0.2` means 20 percent.
+Increases and reductions are fractions: `0.2` means 20 percent. For example, `minecraft:iron_chestplate=stability:50` makes every block with the vanilla shield cost as if it had Stability `100`, and `minecraft:leather_boots=weight_reduction:0.2` makes the wearer 20 percent lighter.
 
 ### Built-in Display Reference
 

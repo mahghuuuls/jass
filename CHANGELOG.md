@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.2.0
+
+### Added
+
+- Stability Bonus: the item modifier field `stability` adds points to the Stability of every shield block the player makes. It can be negative; the Stability used for a block never goes below 0.
+- Weight modifiers: the item modifier fields `flat_weight`, `weight_increase`, and `weight_reduction` change Effective Weight, which never goes below 0.
+- Item tooltips show the new modifier lines, and `/stamina inspect` shows the Stability Bonus and the weight before modifiers.
+- API 1.2: the same four fields for modifier providers (`StaminaContribution`).
+- API 1.2: `IStaminaService.checkActionStart` checks whether an action may start now, with the normal refusal feedback, without a cost event or a payment.
+- API 1.2: an item value provider can claim the bow-like use of its own items (`IItemValueProvider.ownsBowUse`); JASS then applies no bow-draw cost, refusal, or tooltip line to them. `JassApi.isJassBowDraw` and `JassApi.isBowUseOwnedByAddon` answer the same question for addons.
+- API 1.2: `PreparedStaminaAction.getPayableAmount()`.
+
+### Changed
+
+- A held prepared discrete action now always pays its Payable Amount: its cost, limited to the room the debt floor leaves after the other open claims. While it is open, API spends, direct actions, shield blocks, and continuous settlements stop above that amount instead of using it, so near the debt floor they can cost less than before. Without an open prepared action nothing changes.
+
 ## 1.1.0
 
 ### Added
