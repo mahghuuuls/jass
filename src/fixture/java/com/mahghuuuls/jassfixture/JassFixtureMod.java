@@ -481,8 +481,8 @@ public final class JassFixtureMod {
                     break;
                 }
                 case "settleduringpricing": {
-                    // Stamina 5: cast A (12) is held; while cast B (70) is priced, a listener settles A.
-                    stamina.set(player, 5, CHARGE);
+                    // Stamina 20: cast A (12) is held; while cast B (70) is priced, a listener settles A.
+                    stamina.set(player, 20, CHARGE);
                     PreparedStaminaAction a = prepareCost(sender, player, stamina, "settleduringpricing-a", 12);
                     settleOnPrice = a;
                     try {
