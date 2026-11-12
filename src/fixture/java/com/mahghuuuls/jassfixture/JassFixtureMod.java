@@ -67,6 +67,10 @@ public final class JassFixtureMod {
     /** The test wand: a bow renamed to this owns its bow-action use while {@link #ownWand} is on. */
     static final String WAND_NAME = "jassfixture-wand";
     static volatile boolean ownWand = true;
+    /** While true, the client draws a marker where the next left-column HUD row would start. */
+    static volatile boolean leftMarker;
+    /** Counts the toggles, so the client logs the marker again after each one. */
+    static volatile int leftMarkerToggles;
     static final ResourceLocation WAND_PROVIDER = new ResourceLocation("jassfixture", "wand");
     /** When set, the next cast cost event settles this preparation from inside the event. */
     static volatile PreparedStaminaAction settleOnPrice;
@@ -317,7 +321,7 @@ public final class JassFixtureMod {
         public String getUsage(ICommandSender sender) {
             return "/jassfixture <spend|discrete|halve on|off|throw on|off|gated|lateregister|state"
                     + "|prepared success|fail|pending|nested|listener|set|throwlistener|logout|reserve|spendfloor|twice"
-                    + "|protect|protectdirect|truncate|check [raise]|wand on|off|channel on|off>";
+                    + "|protect|protectdirect|truncate|check [raise]|wand on|off|leftmarker on|off|channel on|off>";
         }
 
         @Override
@@ -367,6 +371,16 @@ public final class JassFixtureMod {
                     }
                     ownWand = "on".equals(on);
                     log(sender, "wand ownership=" + ownWand);
+                    break;
+                case "leftmarker":
+                    // A server command on purpose: the toolkit inbox sends only server commands, and in single
+                    // player the client reads the same flag.
+                    if (!"on".equals(on) && !"off".equals(on)) {
+                        throw new CommandException("/jassfixture leftmarker <on|off>");
+                    }
+                    leftMarker = "on".equals(on);
+                    leftMarkerToggles++;
+                    log(sender, "leftmarker on=" + leftMarker);
                     break;
                 case "check": {
                     // The start check: "check" as is, "check raise" with a listener raising every cast cost.

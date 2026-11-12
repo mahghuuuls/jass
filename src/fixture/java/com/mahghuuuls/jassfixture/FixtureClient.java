@@ -11,11 +11,18 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.ClientCommandHandler;
+import net.minecraftforge.client.GuiIngameForge;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-/** Client half of the fixture: {@code /jassfixturehud on|off} replaces the JASS HUD with a text line. */
+/**
+ * Client half of the fixture: {@code /jassfixturehud on|off} replaces the JASS HUD with a text line, and
+ * {@code /jassfixture leftmarker on|off} draws a marker where the next left-column HUD row would start.
+ */
 final class FixtureClient {
 
     private static volatile boolean replaceHud;
@@ -64,6 +71,33 @@ final class FixtureClient {
         Minecraft mc = Minecraft.getMinecraft();
         mc.fontRenderer.drawStringWithShadow(text, event.getScaledWidth() / 2.0F + 10, event.getScaledHeight() - 60,
                 0x55FFFF);
+    }
+
+    private static int lastMarkerTop = Integer.MIN_VALUE;
+    private static int lastMarkerToggles = -1;
+
+    /**
+     * Stands in for a mod that draws the next row of the left bar column: a magenta 81 x 9 box where
+     * that row would start, drawn after the JASS bar (which draws before the air row).
+     */
+    @SubscribeEvent
+    public void onOverlayPost(RenderGameOverlayEvent.Post event) {
+        if (!JassFixtureMod.leftMarker || event.getType() != RenderGameOverlayEvent.ElementType.AIR) {
+            return;
+        }
+        int width = event.getResolution().getScaledWidth();
+        int height = event.getResolution().getScaledHeight();
+        int left = width / 2 - 91;
+        int top = height - GuiIngameForge.left_height;
+        Gui.drawRect(left, top, left + 81, top + 9, 0xFFFF00FF);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        int toggles = JassFixtureMod.leftMarkerToggles;
+        if (top != lastMarkerTop || toggles != lastMarkerToggles) {
+            lastMarkerTop = top;
+            lastMarkerToggles = toggles;
+            JassFixtureMod.LOGGER.info("JASSFIXTURE leftmarker leftHeight={} left={} top={}", GuiIngameForge.left_height,
+                    left, top);
+        }
     }
 
     private static double lastLoggedSwing = Double.NaN;
