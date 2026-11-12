@@ -18,14 +18,36 @@ public final class JassClientConfig {
         CURRENT_AND_MAXIMUM
     }
 
-    /** Where the bar style sits: in a bar column above the hotbar, or in a screen corner. */
+    /**
+     * Where the bar style sits: in a bar column above the hotbar, or anchored to one of nine screen
+     * points (column 0, 1 or 2 from left to right, row 0, 1 or 2 from top to bottom).
+     */
     public enum BarPosition {
-        RIGHT_STACK,
-        LEFT_STACK,
-        TOP_LEFT,
-        TOP_RIGHT,
-        BOTTOM_LEFT,
-        BOTTOM_RIGHT
+        RIGHT_STACK(-1, -1),
+        LEFT_STACK(-1, -1),
+        TOP_LEFT(0, 0),
+        TOP_CENTER(1, 0),
+        TOP_RIGHT(2, 0),
+        MIDDLE_LEFT(0, 1),
+        CENTER(1, 1),
+        MIDDLE_RIGHT(2, 1),
+        BOTTOM_LEFT(0, 2),
+        BOTTOM_CENTER(1, 2),
+        BOTTOM_RIGHT(2, 2);
+
+        /** Horizontal anchor 0, 1 or 2; -1 for a stack position. */
+        final int column;
+        /** Vertical anchor 0, 1 or 2; -1 for a stack position. */
+        final int row;
+
+        BarPosition(int column, int row) {
+            this.column = column;
+            this.row = row;
+        }
+
+        boolean isStack() {
+            return column < 0;
+        }
     }
 
     public enum HudStyle {
@@ -39,9 +61,12 @@ public final class JassClientConfig {
         OFF
     }
 
+    /** Where the fill starts; it shrinks back toward that end as Stamina falls. */
     public enum FillDirection {
         LEFT_TO_RIGHT,
-        RIGHT_TO_LEFT
+        RIGHT_TO_LEFT,
+        BOTTOM_TO_TOP,
+        TOP_TO_BOTTOM
     }
 
     @Config.Name("hud_hide_when_full")
@@ -69,18 +94,22 @@ public final class JassClientConfig {
     public static NumericText hudNumericText = NumericText.HIDDEN;
 
     @Config.Name("bar_position")
-    @Config.Comment({"Where the Stamina bar sits. right_stack and left_stack place it in the bar column above the hotbar,",
-            "stacked with the other bars (and after Classic Bar's bars); the corner values place it at that screen corner."})
+    @Config.Comment({"Where the Stamina bar sits. RIGHT_STACK and LEFT_STACK place it in the bar column above the hotbar,",
+            "stacked with the other bars (and after Classic Bar's bars). The other values anchor it to that point of the screen,",
+            "3 pixels from the screen edges it touches. BOTTOM_CENTER covers the hotbar (and, when lifted with bar_y_offset, the experience bar just above it).",
+            "The bar always stays on screen."})
     public static BarPosition barPosition = BarPosition.RIGHT_STACK;
 
     @Config.Name("bar_width")
-    @Config.Comment("Width of the Stamina bar's fill area, in GUI pixels. In a stack position, widths above 91 reach past the screen centre into the other column.")
-    @Config.RangeInt(min = 10, max = 400)
+    @Config.Comment({"Width of the Stamina bar's fill area on screen, in GUI pixels. In a stack position, widths above 91 reach past the",
+            "screen centre into the other column. For a bar filling BOTTOM_TO_TOP or TOP_TO_BOTTOM this is its thickness."})
+    @Config.RangeInt(min = 1, max = 400)
     public static int barWidth = 81;
 
     @Config.Name("bar_height")
-    @Config.Comment("Height of the Stamina bar's fill area, in GUI pixels. Taller bars take a taller row in the bar column.")
-    @Config.RangeInt(min = 1, max = 20)
+    @Config.Comment({"Height of the Stamina bar's fill area on screen, in GUI pixels. Taller bars take a taller row in the bar column.",
+            "For a bar filling BOTTOM_TO_TOP or TOP_TO_BOTTOM this is its length."})
+    @Config.RangeInt(min = 1, max = 400)
     public static int barHeight = 5;
 
     @Config.Name("bar_x_offset")
@@ -92,7 +121,8 @@ public final class JassClientConfig {
     public static int barYOffset = 0;
 
     @Config.Name("bar_fill_direction")
-    @Config.Comment("Which end of the Stamina bar the fill starts from.")
+    @Config.Comment({"Which end of the Stamina bar the fill starts from; it empties back toward that end.",
+            "BOTTOM_TO_TOP and TOP_TO_BOTTOM fill along bar_height, so a standing bar also needs a small bar_width and a large bar_height (for example 5 and 60)."})
     public static FillDirection barFillDirection = FillDirection.LEFT_TO_RIGHT;
 
     @Config.Name("hud_style")

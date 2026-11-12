@@ -24,19 +24,15 @@ final class BarHud {
 
         Gui.drawRect(left - 1, top - 1, right + 1, bottom + 1, flashing ? FLASH_BORDER : BORDER);
         Gui.drawRect(left, top, right, bottom, EMPTY);
-        int filled = Math.round(layout.width * Math.min(1.0F, visible / maximum));
-        if (filled > 0) {
-            if (direction == FillDirection.RIGHT_TO_LEFT) {
-                Gui.drawRect(right - filled, top, right, bottom, FILL);
-            } else {
-                Gui.drawRect(left, top, left + filled, bottom, FILL);
-            }
+        int[] fill = layout.fill(direction, visible, maximum);
+        if (fill[2] > fill[0] && fill[3] > fill[1]) {
+            Gui.drawRect(fill[0], fill[1], fill[2], fill[3], FILL);
         }
 
         String text = text(visible, maximum, numericText);
         if (!text.isEmpty()) {
-            int textX = layout.textOnLeft ? left - 3 - mc.fontRenderer.getStringWidth(text) : right + 3;
-            mc.fontRenderer.drawStringWithShadow(text, textX, top + (layout.height - 9) / 2, TEXT);
+            mc.fontRenderer.drawStringWithShadow(text, layout.textX(mc.fontRenderer.getStringWidth(text)), layout.textY(),
+                    TEXT);
         }
 
         // Vanilla draws the air bubbles right after this without resetting colour or texture.
