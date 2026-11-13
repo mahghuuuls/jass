@@ -6,7 +6,7 @@ This mod also reworks shields. Each shield has a Stability value that sets how m
 
 The default configuration is inspired by souls-like games: a small stamina pool that recharges quickly. The settings can also fit other stamina styles, such as Valheim or Skyrim, with a larger pool that recharges more slowly. `max_stamina`, `stamina_regeneration`, and `regeneration_delay` control this.
 
-There are other mods that add stamina to Minecraft 1.12.2, including [StaminaPlus](https://www.curseforge.com/minecraft/mc-mods/staminaplus) and [ER Core](https://www.curseforge.com/minecraft/mc-mods/er-core). Those work well for their intended scope. JASS focuses on one pool shared by combat and movement, with per-item tuning, for players, modpack creators, and addon developers who want detailed control over it.
+There are other mods that add stamina to Minecraft 1.12.2, including [StaminaPlus](https://www.curseforge.com/minecraft/mc-mods/staminaplus) and [ER Core](https://www.curseforge.com/minecraft/mc-mods/er-core). JASS focuses on one pool shared by combat and movement, with per-item tuning, for players, modpack creators, and addon developers who want detailed control over it.
 
 <span style="color:#d6a100">**AI usage disclaimer:** This mod was developed with AI-agent assistance using [this agent workflow](https://github.com/mahghuuuls/minecraft-1.12.2-mod-agent-workflow). The project owner reviewed the work during development.</span>
 
@@ -14,20 +14,21 @@ There are other mods that add stamina to Minecraft 1.12.2, including [StaminaPlu
 
 ### What Changes While Playing
 
-- Every melee swing costs stamina, whether it hits or misses. Each weapon can have its own cost. Mining never costs stamina.
+- Every melee swing costs stamina, whether it hits or misses. By default every swing costs 12, with any weapon or an empty hand; a pack can give each weapon its own cost. Mining never costs stamina.
 - Sprinting and drawing a bow drain stamina while you do them. Sprinting stops and a drawn bow is lowered without firing when stamina runs out.
 - Stamina debt: a swing, block, or dodge goes through as long as you have any stamina left, even if it costs more than you have. The missing amount is taken as debt, and your stamina goes below zero.
 - While stamina is at zero or below, you cannot swing, block, sprint, draw, or dodge.
 - Example: you have 5 stamina and swing a sword that costs 12. The swing happens, and your stamina drops to -7. The display shows empty. After the short pause, stamina regenerates from -7 back up past zero, and only then can you act again. With the defaults this takes about one second. A last swing at low stamina is never wasted, but it costs you time.
 - Stamina refills after a short pause once you stop spending it.
 - Jumping can cost stamina too. This is off by default.
+- Players in Creative mode spend no stamina by default, and the stamina display is not shown in Creative.
 
 ### Shields
 
 - Blocking a hit costs stamina based on the damage of the hit.
 - While a shield is raised, stamina regenerates at only 20 percent of its normal speed.
 - Each shield has a Stability value. Higher Stability makes blocks cheaper. Armor, held items, and baubles can add to it (the Stability Bonus) through item modifiers.
-- A shield can be set to stop only part of a melee hit or an arrow. The rest of the damage goes through. The vanilla shield stops everything by default.
+- A shield can be set to stop only part of a melee hit or a projectile. The rest of the damage goes through. Every shield stops everything by default.
 - Guard Break: a block that takes your stamina to zero or below still works, but then the shield is lowered and cannot be raised for a short time. The shield shows a cooldown and plays the shield-break sound.
 - At zero or below you cannot block, and the hit deals full damage.
 
@@ -42,7 +43,7 @@ There are other mods that add stamina to Minecraft 1.12.2, including [StaminaPlu
 
 ### Display and Tooltips
 
-The built-in display is a stamina bar above the hotbar, next to the other bars. It can instead be a row of lightning segments in the style of the hunger bar. It hides while stamina is full and flashes when an action is refused.
+The built-in display is a stamina bar above the hotbar, next to the other bars. It hides while stamina is full and flashes when an action is refused. The bar can be moved to a corner, the middle of an edge, or the center of the screen, resized or stood upright, and set to fill from any end. The display can instead be a row of lightning segments in the style of the hunger bar, which moves only with its own offsets.
 
 Item tooltips show the stamina values the server uses: swing cost, bow drain, shield Stability, block shares and block cost, weight, and item modifiers. Tooltips can be set to show only while Shift is held, or turned off.
 
@@ -50,15 +51,15 @@ Item tooltips show the stamina values the server uses: swing cost, bow drain, sh
 
 Each integration runs only when that mod is installed.
 
-- [Elenai Dodge 2](https://www.curseforge.com/minecraft/mc-mods/elenai-dodge-2): dodges cost stamina instead of feathers, and the feather bar is hidden. Armor weight comes from Elenai's own weight settings and appears in the JASS weight tooltip line. Elenai still refuses dodges in armor that is too heavy for its own limit.
+- [Elenai Dodge 2](https://www.curseforge.com/minecraft/mc-mods/elenai-dodge-2) (1.1.0 or newer): dodges cost stamina instead of feathers, and the feather bar is hidden. Armor weight comes from Elenai's own weight settings and appears in the JASS weight tooltip line. Elenai still refuses dodges in armor that is too heavy for its own limit.
 - [RLCombat](https://www.curseforge.com/minecraft/mc-mods/rlcombat): off-hand attacks cost the swing cost of the off-hand item.
 - [Inhibited](https://www.curseforge.com/minecraft/mc-mods/inhibited), for example with [Combat Inhibited](https://www.curseforge.com/minecraft/mc-mods/combat-inhibited): stamina is spent only while you have the Inhibited effect. Outside it, nothing costs stamina and the display hides.
-- [Baubles](https://www.curseforge.com/minecraft/mc-mods/baubles): item modifiers also apply to worn baubles.
-- [Classic Bar Legacy](https://www.curseforge.com/minecraft/mc-mods/classic-bar-legacy): stamina can be shown as a Classic Bar bar instead of the JASS display. See Classic Bar Setup below.
+- [Baubles](https://www.curseforge.com/minecraft/mc-mods/baubles) (1.5.2 or newer), or [Bubbles](https://www.curseforge.com/minecraft/mc-mods/bubbles-a-baubles-fork): item modifiers also apply to worn baubles.
+- [Classic Bar Legacy](https://www.curseforge.com/minecraft/mc-mods/classic-bar-legacy) (0.6.0 or newer): stamina can be shown as a bar in Classic Bar's layout instead of the JASS display. See Classic Bar Setup below.
 
 Support for more mods is in the separate addon [JASS Integrations](https://www.curseforge.com/minecraft/mc-mods/jass-integrations). See its page for the current list.
 
-[ShieldBreak](https://www.curseforge.com/minecraft/mc-mods/shieldbreak) is not meant to be used with JASS: both mods put shields on cooldown.
+[ShieldBreak](https://www.curseforge.com/minecraft/mc-mods/shieldbreak) is not meant to be used with JASS: both mods put shields on cooldown. More compatibility notes, including [Spartan Shields](https://www.curseforge.com/minecraft/mc-mods/spartan-shields) and [Spartan Weaponry](https://www.curseforge.com/minecraft/mc-mods/spartan-weaponry), are in the [README](https://github.com/mahghuuuls/jass#compatibility-notes).
 
 ### Classic Bar Setup
 
@@ -78,7 +79,7 @@ Required:
 
 - [MixinBooter](https://www.curseforge.com/minecraft/mc-mods/mixin-booter) `10.7` or newer (Cleanroom already includes it)
 
-Install JASS on the server and on every client.
+JASS is a Forge mod, developed and tested on Cleanroom. Install it on the server and on every client.
 
 ## For Modpack Creators
 
@@ -86,11 +87,11 @@ JASS is designed so that its default balance can be replaced without writing ano
 
 - Maximum stamina, stamina regeneration, the delay before regeneration resumes, and how deep stamina debt can go.
 - The cost of melee swings, sprinting, bow draws, jumps, and Elenai dodges.
-- Exact swing costs and bow drains for individual items.
+- Exact swing costs and bow drains for individual items. These lists ship empty, so every item, modded weapons included, uses the default cost. Modded items without an entry also weigh 0 when held and have Stability 0 as shields.
 - Shield Stability, melee and projectile block shares, block cost, Guard Break length, and how much regeneration is kept while a shield is raised.
 - The weight of armor and of held items, and how strongly weight raises movement costs.
 - Stamina properties granted by any registered item while worn, held, or equipped as a bauble.
-- Whether creative players spend stamina, and which addon providers a server permits.
+- Whether creative players spend stamina, and which addon stat providers a server turns off (`disabled_stamina_providers`).
 - The Elenai Dodge 2, RLCombat, Inhibited, and Classic Bar Legacy integrations.
 - The local appearance and visibility of the stamina display and tooltips.
 
@@ -107,7 +108,7 @@ Operators can use `/stamina inspect` to see a player's stamina, stats, weight, a
 
 ## For Mod Developers
 
-JASS includes a public API for addons. Addons can read and change stamina, add their own stamina actions, check an action before its effect and pay only when it succeeds, check whether an action may start without paying, take over the bow-like use of their own items, add stat modifiers, supply default stamina values for their items, adjust or cancel any cost, and replace the display or the tooltip lines. See the API section of the [source repository](https://github.com/mahghuuuls/jass).
+JASS includes a public API for addons. Addons can read and change stamina, add their own stamina actions, check an action before its effect and pay only when it succeeds, check whether an action may start without paying, take over the bow-like use of their own items, add stat modifiers, supply default stamina values for items the config does not list, adjust or cancel any cost, listen for stamina changes, and replace the display or the tooltip lines. See the [API section of the README](https://github.com/mahghuuuls/jass#api) and the Javadoc comments in the `com.mahghuuuls.jass.api` and `com.mahghuuuls.jass.api.client` packages.
 
 ## Detailed System Reference
 
@@ -141,7 +142,7 @@ stamina {
 }
 ```
 
-Melee and jump costs are paid once per action. Sprint and bow costs are per second. Per-item swing costs and bow drains use one entry per line:
+Melee and jump costs are paid once per action. Sprint and bow costs are per second. Per-item swing costs and bow drains use one entry per line. The lists ship empty; for example:
 
 ```properties
 stamina {
@@ -165,7 +166,7 @@ A block costs:
 damage x block_stamina_per_damage x stability_scale / (stability_scale + Stability)
 ```
 
-Stability here is the shield's Stability plus the player's Stability Bonus from item modifiers, and never below `0`. With the defaults (`block_stamina_per_damage` `1.0`, `stability_scale` `100`) and the vanilla shield's Stability of `50`, a block costs `0.67` stamina per point of damage. A shield without a Stability entry uses `default_shield_stability` (default `0`), so it pays the full damage.
+Stability here is the shield's Stability plus the player's Stability Bonus from item modifiers, and never below `0`. With the defaults (`block_stamina_per_damage` `1.0`, `stability_scale` `100`) and the vanilla shield's Stability of `50`, a block costs `0.67` stamina per point of damage. A shield without a Stability entry uses `default_shield_stability` (default `0`), so a block with it costs `1` stamina per point of damage, more than with the vanilla shield.
 
 Block shares set how much of a hit a shield stops: `1.0` stops everything, `0.7` lets 30 percent through. Melee hits and projectiles have separate lists:
 
@@ -235,12 +236,19 @@ Increases and reductions are fractions: `0.2` means 20 percent. For example, `mi
 
 ### Built-in Display Reference
 
-The built-in display can:
+Write the values in upper case, as the configuration file lists them. The built-in display can:
 
-- Be a bar (`hud_style=bar`) or a row of segments (`hud_style=segments`).
+- Be a bar (`hud_style=BAR`) or a row of segments (`hud_style=SEGMENTS`).
 - Hide while stamina is full, and hide outside the Inhibited effect.
 - Show no number, current stamina, maximum stamina, or both.
-- Sit in the right or left bar column above the hotbar, or in any screen corner, with offsets.
-- Change bar width and height, and fill left to right or right to left.
+
+The bar (not the segment row) can also:
+
+- `bar_position`: sit in the right or left bar column above the hotbar (`RIGHT_STACK`, the default, or `LEFT_STACK`), or at one of nine screen points: `TOP_LEFT`, `TOP_CENTER`, `TOP_RIGHT`, `MIDDLE_LEFT`, `CENTER`, `MIDDLE_RIGHT`, `BOTTOM_LEFT`, `BOTTOM_CENTER`, `BOTTOM_RIGHT`.
+- `bar_x_offset`, `bar_y_offset`: move from there, in GUI pixels; positive values move it right and up.
+- `bar_width`, `bar_height`: any size from 1 to 400 GUI pixels (default 81 x 5).
+- `bar_fill_direction`: fill from the left, right, bottom, or top (`LEFT_TO_RIGHT`, the default, `RIGHT_TO_LEFT`, `BOTTOM_TO_TOP`, `TOP_TO_BOTTOM`). For a standing bar, use a small width and a large height, for example `bar_width=5`, `bar_height=60`, `bar_fill_direction=BOTTOM_TO_TOP`.
+
+The bar always stays fully on screen. `BOTTOM_CENTER` covers the hotbar; lifted a little, it covers the experience bar, so lift it further or choose another position. The segment row moves only with `segments_x_offset` and `segments_y_offset`.
 
 Source code: [github.com/mahghuuuls/jass](https://github.com/mahghuuuls/jass)

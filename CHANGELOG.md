@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.3.0
+
+### Added
+
+- More places for the Stamina bar: `bar_position` can now also be `TOP_CENTER`, `MIDDLE_LEFT`, `CENTER`, `MIDDLE_RIGHT`, and `BOTTOM_CENTER`, beside the four corners and the two bar columns above the hotbar.
+- Standing bars: `bar_fill_direction` can now be `BOTTOM_TO_TOP` or `TOP_TO_BOTTOM`. Pair it with a small `bar_width` and a large `bar_height`, for example 5 and 60.
+- `bar_width` and `bar_height` now each accept 1 to 400.
+
+### Changed
+
+- The Stamina bar now always stays fully on screen, whatever its position and offsets.
+- The numbers beside the bar move to its other side when their usual side would leave the screen.
+- With the default settings the bar looks and sits exactly as before.
+
+### Fixed
+
+- The `bar_position` description in `jass-client.cfg` named the values in lower case; the file needs the upper-case names (`RIGHT_STACK`).
+
 ## 1.2.0
 
 ### Added

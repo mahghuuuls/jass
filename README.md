@@ -8,7 +8,7 @@ A server-authoritative stamina system for Minecraft 1.12.2. Melee swings, shield
 
 ## Identity and installation
 
-- Mod ID `jass`, version 1.2.0, Forge 1.12.2 artifact. Developed and tested on Cleanroom.
+- Mod ID `jass`, version 1.3.0, Forge 1.12.2 artifact. Developed and tested on Cleanroom.
 - Required on the server and on every client.
 - Requires MixinBooter 10.7 or later (Cleanroom includes it).
 - Optional integrations, each active only when the mod is present: Elenai Dodge 2 (1.1.0 or later), Baubles API providers such as Baubles or Bubbles (1.5.2 or later), Classic Bar Legacy (0.6.0 or later), RLCombat, Inhibited.
@@ -28,7 +28,9 @@ Server settings live in `config/jass/jass.cfg`. In multiplayer they are sent to 
 | Integrations | `inhibited_integration`, `rlcombat_integration`, `elenai_dodge_resource_integration`, `elenai_dodge_base_cost`, `elenai_weight_source_integration`, `elenai_weight_conversion` |
 | Operations | `command_permission_level`, `debug_logging` |
 
-Client settings live in `config/jass/jass-client.cfg`: `hud_style` (`bar` or `segments`), bar position, size, offsets and fill direction, segment offsets, `hud_numeric_text`, `hud_hide_when_full`, `hud_hide_outside_inhibited`, `denied_action_sound`, `item_tooltips` (`always`, `shift`, `off`), the Classic Bar options, `hide_elenai_feather_hud`, and `hide_elenai_weight_tooltip`.
+Client settings live in `config/jass/jass-client.cfg`: `hud_style` (`BAR` or `SEGMENTS`), the bar's `bar_position` (`RIGHT_STACK` or `LEFT_STACK` above the hotbar, or one of nine screen anchors from `TOP_LEFT` to `BOTTOM_RIGHT`, including `CENTER`), `bar_width` and `bar_height` (1 to 400), `bar_x_offset` and `bar_y_offset`, `bar_fill_direction` (`LEFT_TO_RIGHT`, `RIGHT_TO_LEFT`, `BOTTOM_TO_TOP`, `TOP_TO_BOTTOM`), segment offsets, `hud_numeric_text`, `hud_hide_when_full`, `hud_hide_outside_inhibited`, `denied_action_sound`, `item_tooltips` (`ALWAYS`, `SHIFT`, `OFF`), the Classic Bar options, `hide_elenai_feather_hud`, and `hide_elenai_weight_tooltip`.
+
+Named values in `jass-client.cfg` are case-sensitive: write the upper-case names the file lists, such as `CENTER` or `BOTTOM_TO_TOP`. The bar always stays on screen; an anchored bar can cover other HUD elements, such as the hotbar under `BOTTOM_CENTER`, and the offsets move it.
 
 Per-item lists use `namespace:item[@metadata or @*]=value`, one entry per line. Item modifier rules use `namespace:item=field:value;field:value` and apply while the item is in an armor slot, a hand, or a Baubles slot. Besides the pool fields, `stability` adds to the Stability Bonus (added to the blocking item's Stability in every Shield Block, counted as 0 below 0), and `flat_weight`, `weight_increase`, and `weight_reduction` change Effective Weight.
 
@@ -46,6 +48,8 @@ Commands: `/stamina inspect [player]`, `/stamina restore [player]`, `/stamina se
 ## API
 
 Public types are in `com.mahghuuuls.jass.api` (common) and `com.mahghuuuls.jass.api.client` (client only). Entry point: `JassApi`.
+
+JASS 1.3.0 provides API 1.2 (no API change since 1.2.0). JASS is not published to a Maven repository: build against the release jar from CurseForge (for example through CurseMaven, deobfuscated), and declare `after:jass` or `required-after:jass` in your `@Mod` dependencies.
 
 - `JassApi.getStaminaService()`: read state and derived stats; spend, restore, or set stamina with a cause id; run discrete and continuous actions that follow JASS rules, with the item and hand behind them.
 - `registerItemProvider` and `registerContextualProvider`: stat modifiers from items or from player context.
